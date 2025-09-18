@@ -3,6 +3,7 @@ package shared
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -245,4 +246,30 @@ func PromptGists(prompter prompter.Prompter, client *http.Client, host string, c
 	}
 
 	return &gists[result], nil
+}
+
+func GetRawGistFile(httpClient *http.Client, rawURL string) (string, error) {
+	req, err := http.NewRequest("GET", rawURL, nil)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", api.HandleHTTPError(resp)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
 }
