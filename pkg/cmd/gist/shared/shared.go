@@ -19,10 +19,12 @@ import (
 )
 
 type GistFile struct {
-	Filename string `json:"filename,omitempty"`
-	Type     string `json:"type,omitempty"`
-	Language string `json:"language,omitempty"`
-	Content  string `json:"content"`
+	Filename  string `json:"filename,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Language  string `json:"language,omitempty"`
+	Content   string `json:"content"`
+	RawURL    string `json:"raw_url,omitempty"`
+	Truncated bool   `json:"truncated,omitempty"`
 }
 
 type GistOwner struct {
