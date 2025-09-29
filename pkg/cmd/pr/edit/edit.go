@@ -3,6 +3,8 @@ package edit
 import (
 	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
@@ -13,6 +15,7 @@ import (
 	shared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/cli/cli/v2/pkg/set"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
@@ -237,7 +240,7 @@ func editRun(opts *EditOptions) error {
 
 	findOptions := shared.FindOptions{
 		Selector: opts.SelectorArg,
-		Fields:   []string{"id", "url", "title", "body", "baseRefName", "reviewRequests", "labels", "projectCards", "projectItems", "milestone"},
+		Fields:   []string{"id", "author", "url", "title", "body", "baseRefName", "reviewRequests", "labels", "projectCards", "projectItems", "milestone"},
 		Detector: opts.Detector,
 	}
 
@@ -298,6 +301,18 @@ func editRun(opts *EditOptions) error {
 	}
 
 	if opts.Interactive {
+		// Remove PR author from reviewer options
+		// as it is not a valid option for a reviewer.
+		// The REST API will return an error if we
+		// attempt to add the PR author as a reviewer.
+		// However, the GraphQL API will silently ignore it.
+		if editable.Reviewers.Edited {
+			s := set.NewStringSet()
+			s.AddValues(editable.Reviewers.Options)
+			s.Remove(pr.Author.Login)
+			editable.Reviewers.Options = s.ToSlice()
+		}
+
 		editorCommand, err := opts.EditorRetriever.Retrieve()
 		if err != nil {
 			return err
@@ -309,7 +324,7 @@ func editRun(opts *EditOptions) error {
 	}
 
 	opts.IO.StartProgressIndicator()
-	err = updatePullRequest(httpClient, repo, pr.ID, editable)
+	err = updatePullRequest(httpClient, repo, pr.ID, pr.Number, editable)
 	opts.IO.StopProgressIndicator()
 	if err != nil {
 		return err
@@ -320,36 +335,71 @@ func editRun(opts *EditOptions) error {
 	return nil
 }
 
-func updatePullRequest(httpClient *http.Client, repo ghrepo.Interface, id string, editable shared.Editable) error {
+func updatePullRequest(httpClient *http.Client, repo ghrepo.Interface, id string, number int, editable shared.Editable) error {
 	var wg errgroup.Group
 	wg.Go(func() error {
 		return shared.UpdateIssue(httpClient, repo, id, true, editable)
 	})
 	if editable.Reviewers.Edited {
 		wg.Go(func() error {
-			return updatePullRequestReviews(httpClient, repo, id, editable)
+			return updatePullRequestReviews(httpClient, repo, number, editable)
 		})
 	}
 	return wg.Wait()
 }
 
-func updatePullRequestReviews(httpClient *http.Client, repo ghrepo.Interface, id string, editable shared.Editable) error {
-	userIds, teamIds, err := editable.ReviewerIds()
-	if err != nil {
-		return err
-	}
-	if userIds == nil && teamIds == nil {
+func updatePullRequestReviews(httpClient *http.Client, repo ghrepo.Interface, number int, editable shared.Editable) error {
+	if !editable.Reviewers.Edited {
 		return nil
 	}
-	union := githubv4.Boolean(false)
-	reviewsRequestParams := githubv4.RequestReviewsInput{
-		PullRequestID: id,
-		Union:         &union,
-		UserIDs:       ghIds(userIds),
-		TeamIDs:       ghIds(teamIds),
+
+	// Rebuild the Value slice from non-interactive flag input.
+	if len(editable.Reviewers.Add) != 0 || len(editable.Reviewers.Remove) != 0 {
+		s := set.NewStringSet()
+		s.AddValues(editable.Reviewers.Add)
+		s.AddValues(editable.Reviewers.Default)
+		s.RemoveValues(editable.Reviewers.Remove)
+		editable.Reviewers.Value = s.ToSlice()
 	}
+
+	var addUsers []string
+	var addTeams []string
+	for _, r := range editable.Reviewers.Value {
+		if strings.ContainsRune(r, '/') {
+			teamSlug := strings.Split(r, "/")[1]
+			addTeams = append(addTeams, teamSlug)
+		} else {
+			addUsers = append(addUsers, r)
+		}
+	}
+
+	// Reviewers in Default but not in the Value have been removed interactively.
+	var toRemove []string
+	for _, r := range editable.Reviewers.Default {
+		if !slices.Contains(editable.Reviewers.Value, r) {
+			toRemove = append(toRemove, r)
+		}
+	}
+	var removeUsers []string
+	var removeTeams []string
+	for _, r := range toRemove {
+		if strings.ContainsRune(r, '/') {
+			teamSlug := strings.Split(r, "/")[1]
+			removeTeams = append(removeTeams, teamSlug)
+		} else {
+			removeUsers = append(removeUsers, r)
+		}
+	}
+
 	client := api.NewClientFromHTTP(httpClient)
-	return api.UpdatePullRequestReviews(client, repo, reviewsRequestParams)
+	wg := errgroup.Group{}
+	wg.Go(func() error {
+		return api.AddPullRequestReviews(client, repo, number, addUsers, addTeams)
+	})
+	wg.Go(func() error {
+		return api.RemovePullRequestReviews(client, repo, number, removeUsers, removeTeams)
+	})
+	return wg.Wait()
 }
 
 type Surveyor interface {
