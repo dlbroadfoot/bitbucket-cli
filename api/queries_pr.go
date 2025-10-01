@@ -631,7 +631,7 @@ func CreatePullRequest(client *Client, repo *Repository, params map[string]inter
 	return pr, nil
 }
 
-// AddPullRequestReviews updates the requested reviewers on a pull request using the REST API.
+// AddPullRequestReviews adds the given user and team reviewers to a pull request using the REST API.
 func AddPullRequestReviews(client *Client, repo ghrepo.Interface, prNumber int, users, teams []string) error {
 	if len(users) == 0 && len(teams) == 0 {
 		return nil

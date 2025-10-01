@@ -300,11 +300,8 @@ func editRun(opts *EditOptions) error {
 	}
 
 	if opts.Interactive {
-		// Remove PR author from reviewer options
-		// as it is not a valid option for a reviewer.
-		// The REST API will return an error if we
-		// attempt to add the PR author as a reviewer.
-		// However, the GraphQL API will silently ignore it.
+		// Remove PR author from reviewer options;
+		// REST API errors if author is included (GraphQL silently ignores).
 		if editable.Reviewers.Edited {
 			s := set.NewStringSet()
 			s.AddValues(editable.Reviewers.Options)
@@ -361,16 +358,7 @@ func updatePullRequestReviews(httpClient *http.Client, repo ghrepo.Interface, nu
 		editable.Reviewers.Value = s.ToSlice()
 	}
 
-	var addUsers []string
-	var addTeams []string
-	for _, r := range editable.Reviewers.Value {
-		if strings.ContainsRune(r, '/') {
-			teamSlug := strings.Split(r, "/")[1]
-			addTeams = append(addTeams, teamSlug)
-		} else {
-			addUsers = append(addUsers, r)
-		}
-	}
+	addUsers, addTeams := partitionUsersAndTeams(editable.Reviewers.Value)
 
 	// Reviewers in Default but not in the Value have been removed interactively.
 	var toRemove []string
@@ -379,16 +367,7 @@ func updatePullRequestReviews(httpClient *http.Client, repo ghrepo.Interface, nu
 			toRemove = append(toRemove, r)
 		}
 	}
-	var removeUsers []string
-	var removeTeams []string
-	for _, r := range toRemove {
-		if strings.ContainsRune(r, '/') {
-			teamSlug := strings.Split(r, "/")[1]
-			removeTeams = append(removeTeams, teamSlug)
-		} else {
-			removeUsers = append(removeUsers, r)
-		}
-	}
+	removeUsers, removeTeams := partitionUsersAndTeams(toRemove)
 
 	client := api.NewClientFromHTTP(httpClient)
 	wg := errgroup.Group{}
@@ -438,4 +417,20 @@ type editorRetriever struct {
 
 func (e editorRetriever) Retrieve() (string, error) {
 	return cmdutil.DetermineEditor(e.config)
+}
+
+// partitionUsersAndTeams splits reviewer identifiers into user logins and team slugs.
+// Team identifiers are in the form "org/slug"; only the slug portion is returned for teams.
+func partitionUsersAndTeams(values []string) (users []string, teams []string) {
+	for _, v := range values {
+		if strings.ContainsRune(v, '/') {
+			parts := strings.SplitN(v, "/", 2)
+			if len(parts) == 2 && parts[1] != "" {
+				teams = append(teams, parts[1])
+			}
+		} else if v != "" {
+			users = append(users, v)
+		}
+	}
+	return
 }
