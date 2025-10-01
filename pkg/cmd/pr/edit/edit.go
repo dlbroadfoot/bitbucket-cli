@@ -16,7 +16,6 @@ import (
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/cli/v2/pkg/set"
-	"github.com/shurcooL/githubv4"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
@@ -439,15 +438,4 @@ type editorRetriever struct {
 
 func (e editorRetriever) Retrieve() (string, error) {
 	return cmdutil.DetermineEditor(e.config)
-}
-
-func ghIds(s *[]string) *[]githubv4.ID {
-	if s == nil {
-		return nil
-	}
-	ids := make([]githubv4.ID, len(*s))
-	for i, v := range *s {
-		ids[i] = v
-	}
-	return &ids
 }
