@@ -167,15 +167,6 @@ func deleteCaches(opts *DeleteOptions, client *api.Client, repo ghrepo.Interface
 
 	totalDeleted := 0
 	for _, cache := range toDelete {
-		// We use two different endpoints with different response schemas:
-		//
-		//   1. /repos/OWNER/REPO/actions/caches/ID (for deleting by cache ID)
-		//      - returns HTTP 204 (NO CONTENT) on success
-		//   2. /repos/OWNER/REPO/actions/caches?key=KEY[&ref=REF] (for deleting by cache key, and optionally a ref)
-		//      - returns HTTP 200 on success including information about the deleted caches
-		//
-		// The API calls are split into separate functions to handle the different response handling.
-
 		var count int
 		var err error
 		if id, ok := parseCacheID(cache); ok {
@@ -215,6 +206,7 @@ func deleteCaches(opts *DeleteOptions, client *api.Client, repo ghrepo.Interface
 }
 
 func deleteCacheByID(client *api.Client, repo ghrepo.Interface, id int) error {
+	// returns HTTP 204 (NO CONTENT) on success
 	path := fmt.Sprintf("repos/%s/actions/caches/%d", ghrepo.FullName(repo), id)
 	return client.REST(repo.RepoHost(), "DELETE", path, nil, nil)
 }
