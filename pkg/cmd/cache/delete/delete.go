@@ -219,6 +219,12 @@ func deleteCacheByID(client *api.Client, repo ghrepo.Interface, id int) error {
 	return client.REST(repo.RepoHost(), "DELETE", path, nil, nil)
 }
 
+// deleteCacheByKey deletes cache entries by given key (and optional ref) and
+// returns the number of deleted entries.
+//
+// Note that a key/ref combination does not necessarily map to a single cache
+// entry. There may be more than one entries with the same key/ref combination,
+// but those entries will have different IDs.
 func deleteCacheByKey(client *api.Client, repo ghrepo.Interface, key, ref string) (int, error) {
 	path := fmt.Sprintf("repos/%s/actions/caches?key=%s", ghrepo.FullName(repo), url.QueryEscape(key))
 	if ref != "" {
