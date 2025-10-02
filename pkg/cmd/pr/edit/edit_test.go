@@ -590,6 +590,7 @@ func Test_editRun(t *testing.T) {
 			httpStubs: func(t *testing.T, reg *httpmock.Registry) {
 				// reviewer add includes team but non-interactive Add/Remove provided -> no team fetch
 				mockRepoMetadata(reg, mockRepoMetadataOptions{reviewers: true})
+				// explicitly assert that no OrganizationTeamList query occurs
 				reg.Exclude(t, httpmock.GraphQL(`query OrganizationTeamList\b`))
 				mockPullRequestUpdate(reg)
 				mockPullRequestAddReviewers(reg)
