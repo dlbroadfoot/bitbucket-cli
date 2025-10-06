@@ -106,9 +106,17 @@ func revertRun(opts *RevertOptions) error {
 
 	params := githubv4.RevertPullRequestInput{
 		PullRequestID: pr.ID,
-		Title:         githubv4.NewString(githubv4.String(opts.Title)),
-		Body:          githubv4.NewString(githubv4.String(opts.Body)),
 		Draft:         githubv4.NewBoolean(githubv4.Boolean(opts.IsDraft)),
+	}
+	// Only set the Body field when opts.BodySet is true to avoid overriding
+	// GitHub's default revert body generation.
+	if opts.BodySet {
+		params.Body = githubv4.NewString(githubv4.String(opts.Body))
+	}
+	// Only set the Title field when opts.Title is not empty to avoid overriding
+	// GitHub's default revert title generation.
+	if opts.Title != "" {
+		params.Title = githubv4.NewString(githubv4.String(opts.Title))
 	}
 
 	revertPR, err := api.PullRequestRevert(apiClient, baseRepo, params)
