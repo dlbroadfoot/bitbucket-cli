@@ -41,6 +41,11 @@ func OnGetByDigestSuccess(params FetchParams) ([]*Attestation, error) {
 	att3 := makeTestReleaseAttestation()
 	attestations := []*Attestation{&att1, &att2}
 	if params.PredicateType != "" {
+		// "release" is a sentinel value that returns all release attestations (v0.1, v0.2, etc.)
+		// This mimics the GitHub API behavior which handles this server-side
+		if params.PredicateType == "release" {
+			return []*Attestation{&att3}, nil
+		}
 		if params.PredicateType == "https://in-toto.io/attestation/release/v0.1" {
 			attestations = append(attestations, &att3)
 		}
