@@ -27,14 +27,6 @@ func TestChooseVerifierWithNilPublicGood(t *testing.T) {
 	require.ErrorContains(t, err, "public good verifier is not available")
 }
 
-// TestChooseVerifierWithGitHubIssuer tests that chooseVerifier can select
-// GitHub verifier even when PGI verifier is nil.
-func TestChooseVerifierWithGitHubIssuer(t *testing.T) {
-	// We'll test this scenario with the actual initialization
-	// to ensure GitHub verifier is properly created
-	t.Skip("This requires integration test with actual TUF client - covered by integration tests")
-}
-
 // TestChooseVerifierUnrecognizedIssuer tests that an error is returned
 // for unrecognized issuers.
 func TestChooseVerifierUnrecognizedIssuer(t *testing.T) {
@@ -47,14 +39,6 @@ func TestChooseVerifierUnrecognizedIssuer(t *testing.T) {
 
 	require.Error(t, err)
 	require.ErrorContains(t, err, "leaf certificate issuer is not recognized")
-}
-
-// TestGetBundleIssuer tests the getBundleIssuer helper function
-func TestGetBundleIssuer(t *testing.T) {
-	// This test would require setting up a mock bundle
-	// For now, we'll just verify it exists and can be called
-	// Integration tests cover the actual functionality
-	t.Skip("getBundleIssuer requires a valid bundle which needs integration test setup")
 }
 
 func TestLiveSigstoreVerifier_noVerifierSet(t *testing.T) {
