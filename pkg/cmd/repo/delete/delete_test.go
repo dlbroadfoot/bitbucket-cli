@@ -42,7 +42,6 @@ func TestNewCmdDelete(t *testing.T) {
 			output:     DeleteOptions{RepoArg: "OWNER/REPO"},
 			wantErr:    true,
 			wantErrMsg: "--yes required when not running interactively",
-			wantStderr: "Error: --yes required when not running interactively\n",
 		},
 		{
 			name:   "base repo resolution",
@@ -63,14 +62,12 @@ func TestNewCmdDelete(t *testing.T) {
 			input:      "--yes",
 			wantErr:    true,
 			wantErrMsg: "cannot non-interactively delete current repository. Please specify a repository or run interactively",
-			wantStderr: "Error: cannot non-interactively delete current repository. Please specify a repository or run interactively\n",
 		},
 		{
 			name:       "confirm flag error when no argument notty",
 			input:      "--confirm",
 			wantErr:    true,
 			wantErrMsg: "cannot non-interactively delete current repository. Please specify a repository or run interactively",
-			wantStderr: "Error: cannot non-interactively delete current repository. Please specify a repository or run interactively\n",
 		},
 		{
 			name:       "confirm flag also ignored when no argument tty",
@@ -103,13 +100,13 @@ func TestNewCmdDelete(t *testing.T) {
 
 			_, err = cmd.ExecuteC()
 
-			assert.Equal(t, tt.wantStderr, stdErr.String())
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Equal(t, tt.wantErrMsg, err.Error())
 				return
 			}
 			assert.NoError(t, err)
+			assert.Equal(t, tt.wantStderr, stdErr.String())
 			assert.Equal(t, tt.output.RepoArg, gotOpts.RepoArg)
 		})
 	}
