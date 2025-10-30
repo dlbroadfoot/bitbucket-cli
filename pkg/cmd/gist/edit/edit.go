@@ -155,15 +155,6 @@ func editRun(opts *EditOptions) error {
 	// Transform our gist into the schema that the update endpoint expects
 	filesToupdate := make(map[string]*gistFileToUpdate, len(gist.Files))
 	for filename, file := range gist.Files {
-		if file.Truncated {
-			fullContent, err := shared.GetRawGistFile(client, file.RawURL)
-			if err != nil {
-				return err
-			}
-
-			file.Content = fullContent
-		}
-
 		filesToupdate[filename] = &gistFileToUpdate{
 			Content:     file.Content,
 			NewFilename: file.Filename,
@@ -265,6 +256,17 @@ func editRun(opts *EditOptions) error {
 		}
 		if shared.IsBinaryContents([]byte(gistFile.Content)) {
 			return fmt.Errorf("editing binary files not supported")
+		}
+
+		// If the file is truncated, fetch the full content
+		file := gist.Files[filename]
+		if file.Truncated {
+			fullContent, err := shared.GetRawGistFile(client, file.RawURL)
+			if err != nil {
+				return err
+			}
+
+			gistFile.Content = fullContent
 		}
 
 		var text string
