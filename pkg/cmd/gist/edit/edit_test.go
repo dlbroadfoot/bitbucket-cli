@@ -230,10 +230,6 @@ func Test_editRun(t *testing.T) {
 			wantLastRequestParameters: map[string]interface{}{
 				"description": "catbug",
 				"files": map[string]interface{}{
-					"cicada.txt": map[string]interface{}{
-						"content":  "bwhiizzzbwhuiiizzzz",
-						"filename": "cicada.txt",
-					},
 					"unix.md": map[string]interface{}{
 						"content":  "new file content",
 						"filename": "unix.md",
@@ -478,10 +474,6 @@ func Test_editRun(t *testing.T) {
 			wantLastRequestParameters: map[string]interface{}{
 				"description": "",
 				"files": map[string]interface{}{
-					"sample.txt": map[string]interface{}{
-						"filename": "sample.txt",
-						"content":  "bwhiizzzbwhuiiizzzz",
-					},
 					"sample2.txt": nil,
 				},
 			},
@@ -650,10 +642,6 @@ func Test_editRun(t *testing.T) {
 						"content":  "new file content",
 						"filename": "large.txt",
 					},
-					"also-truncated.txt": map[string]interface{}{
-						"content":  "This is the full content of the also-truncated file retrieved from raw URL",
-						"filename": "also-truncated.txt",
-					},
 				},
 			},
 		},
@@ -687,9 +675,6 @@ func Test_editRun(t *testing.T) {
 						if filename == "large.txt" {
 							reg.Register(httpmock.REST("GET", "user/1234/raw/large.txt"),
 								httpmock.StringResponse("This is the full content of the large file retrieved from raw URL"))
-						} else if filename == "also-truncated.txt" {
-							reg.Register(httpmock.REST("GET", "user/1234/raw/also-truncated.txt"),
-								httpmock.StringResponse("This is the full content of the also-truncated file retrieved from raw URL"))
 						}
 					}
 				}
