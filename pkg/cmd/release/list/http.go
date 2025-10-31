@@ -52,7 +52,7 @@ func fetchReleases(httpClient *http.Client, repo ghrepo.Interface, limit int, ex
 	// near future.
 	//
 	// Note 2: We couldn't use GraphQL directives like `@include(condition)` or
-	// `@skip`(condition) here because if the field doesn't exist on the schema
+	// `@skip(condition)` here because if the field doesn't exist on the schema
 	// then the whole query would still fail regardless of the condition being
 	// met or not.
 	if !releaseFeatures.ImmutableReleases {
