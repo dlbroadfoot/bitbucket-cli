@@ -18,6 +18,7 @@ type Job struct {
 	ID                string          `json:"job_id,omitempty"`
 	SessionID         string          `json:"session_id,omitempty"`
 	ProblemStatement  string          `json:"problem_statement,omitempty"`
+	CustomAgent       string          `json:"custom_agent,omitempty"`
 	EventType         string          `json:"event_type,omitempty"`
 	ContentFilterMode string          `json:"content_filter_mode,omitempty"`
 	Status            string          `json:"status,omitempty"`
@@ -54,7 +55,7 @@ const jobsBasePathV1 = baseCAPIURL + "/agents/swe/v1/jobs"
 // CreateJob queues a new job using the v1 Jobs API. It may or may not
 // return Pull Request information. If Pull Request information is required
 // following up by polling GetJob with the job ID is necessary.
-func (c *CAPIClient) CreateJob(ctx context.Context, owner, repo, problemStatement, baseBranch string) (*Job, error) {
+func (c *CAPIClient) CreateJob(ctx context.Context, owner, repo, problemStatement, baseBranch, customAgent string) (*Job, error) {
 	if owner == "" || repo == "" {
 		return nil, errors.New("owner and repo are required")
 	}
@@ -71,6 +72,7 @@ func (c *CAPIClient) CreateJob(ctx context.Context, owner, repo, problemStatemen
 
 	payload := &Job{
 		ProblemStatement: problemStatement,
+		CustomAgent:      customAgent,
 		EventType:        defaultEventType,
 		PullRequest:      &prOpts,
 	}
