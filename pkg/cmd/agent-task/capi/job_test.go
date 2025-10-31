@@ -368,7 +368,7 @@ func TestCreateJob(t *testing.T) {
 					}`)),
 				)
 			},
-			wantErr: "failed to create job: some error",
+			wantErr: "failed to create job: 500 Internal Server Error: some error",
 		},
 		{
 			name: "API error",
@@ -378,7 +378,7 @@ func TestCreateJob(t *testing.T) {
 					httpmock.StatusStringResponse(500, `{}`),
 				)
 			},
-			wantErr: "failed to create job: 500 Internal Server Error",
+			wantErr: "failed to create job: 500 Internal Server Error: ",
 		},
 		{
 			name: "invalid JSON response, non-HTTP 200",
