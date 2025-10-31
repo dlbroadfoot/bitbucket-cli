@@ -72,7 +72,7 @@ func listRun(opts *ListOptions) error {
 	}
 
 	// TODO: immutableReleaseFullSupport
-	// The detector is not needed when covered GHES version fully support
+	// The detector is not needed when covered GHES versions fully support
 	// immutable releases (probably when 3.18 goes EOL).
 	if opts.Detector == nil {
 		cachedClient := api.NewCachedHTTPClient(httpClient, time.Hour*24)

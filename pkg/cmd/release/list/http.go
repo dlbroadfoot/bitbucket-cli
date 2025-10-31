@@ -44,12 +44,12 @@ func fetchReleases(httpClient *http.Client, repo ghrepo.Interface, limit int, ex
 	// support immutable releases, which would probably be when GHES 3.18 goes
 	// EOL. At that point we can remove this if statement.
 	//
-	// Note 1: This could be have been done differently by using dual two
-	// separate query types or even using plain text/string queries. But, both
-	// would require us to refactor them back in the future, to the single,
-	// strongly-typed query approach as it was before. So, duplicating the entire
-	// function for now seems like the lesser evil, with a quicker and less risky
-	// clean up in the near future.
+	// Note 1: This could have been done differently by using two separate query
+	// types or even using plain text/string queries. But, both would require us
+	// to refactor them back in the future, to the single, strongly-typed query
+	// approach as it was before. So, duplicating the entire function for now
+	// seems like the lesser evil, with a quicker and less risky clean up in the
+	// near future.
 	//
 	// Note 2: We couldn't use GraphQL directives like `@include(condition)` or
 	// `@skip`(condition) here because if the field doesn't exist on the schema
