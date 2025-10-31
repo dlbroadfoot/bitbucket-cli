@@ -143,6 +143,9 @@ func NewCmdApi(f *cmdutil.Factory, runF func(*ApiOptions) error) *cobra.Command 
 			# Add parameters to a GET request
 			$ gh api -X GET search/issues -f q='repo:cli/cli is:open remote'
 
+			# Use a JSON file as request body
+			$ gh api repos/{owner}/{repo}/rulesets --input file.json
+
 			# Set a custom HTTP header
 			$ gh api -H 'Accept: application/vnd.github.v3.raw+json' ...
 
