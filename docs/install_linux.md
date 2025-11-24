@@ -396,6 +396,13 @@ To upgrade:
 spack uninstall gh && spack install gh
 ```
 
+### Ubuntu Community
+
+The [GitHub CLI package](https://packages.ubuntu.com/noble/gh) is synced from [upstream Debian Community package](#debian-community).
+
+> [!NOTE]
+> As of November 2025, GitHub CLI maintainers strongly recommend [official Debian packages](#debian) especially as the community-distributed `2.45.x` / `2.46.x` version is broken due to deprecated GitHub APIs.
+
 ### Void Linux
 
 The [GitHub CLI package](https://voidlinux.org/packages/?arch=x86_64&q=github-cli): is supported by the Void Linux community with updates powered by [void-linux/void-packages](https://github.com/void-linux/void-packages/tree/master/srcpkgs/github-cli).
@@ -405,13 +412,6 @@ To install:
 ```bash
 sudo xbps-install github-cli
 ```
-
-### Ubuntu Community
-
-The [GitHub CLI package](https://packages.ubuntu.com/noble/gh) is synced from [upstream Debian Community package](#debian-community).
-
-> [!NOTE]
-> As of November 2025, GitHub CLI maintainers strongly recommend [official Debian packages](#debian) especially as the community-distributed `2.45.x` / `2.46.x` version is broken due to deprecated GitHub APIs.
 
 ### Webi
 
