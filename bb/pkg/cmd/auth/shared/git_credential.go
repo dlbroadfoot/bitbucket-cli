@@ -3,8 +3,8 @@ package shared
 import (
 	"errors"
 
-	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/pkg/cmd/auth/shared/gitcredentials"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/shared/gitcredentials"
 )
 
 type HelperConfig interface {

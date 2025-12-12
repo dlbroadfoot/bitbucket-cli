@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cli/bb/v2/internal/keyring"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/keyring"
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/cli/go-gh/v2/pkg/config"
 )

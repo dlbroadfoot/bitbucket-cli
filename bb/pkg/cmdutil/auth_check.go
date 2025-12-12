@@ -3,7 +3,7 @@ package cmdutil
 import (
 	"reflect"
 
-	"github.com/cli/bb/v2/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

@@ -4,8 +4,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/internal/ghrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghrepo"
 	"github.com/stretchr/testify/assert"
 )
 

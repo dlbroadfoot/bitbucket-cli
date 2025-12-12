@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/cli/bb/v2/internal/config"
-	"github.com/cli/bb/v2/internal/run"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/run"
 	"github.com/cli/safeexec"
 )
 

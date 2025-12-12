@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/bbinstance"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/api"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 )
 
 type iconfig interface {

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cli/bb/v2/context"
-	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/internal/bbinstance"
-	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/pkg/set"
+	"github.com/dlbroadfoot/bitbucket-cli/context"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/set"
 	"github.com/cli/go-gh/v2/pkg/ssh"
 )
 

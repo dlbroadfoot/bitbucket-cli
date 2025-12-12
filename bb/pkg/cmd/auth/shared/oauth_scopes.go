@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/ghinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/api"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 )
 
 type MissingScopesError struct {

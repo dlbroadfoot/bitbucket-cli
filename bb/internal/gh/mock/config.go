@@ -4,8 +4,8 @@
 package ghmock
 
 import (
-	"github.com/cli/bb/v2/internal/gh"
-	o "github.com/cli/bb/v2/pkg/option"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	o "github.com/dlbroadfoot/bitbucket-cli/pkg/option"
 	"sync"
 )
 

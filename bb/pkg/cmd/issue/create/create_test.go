@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 )
 
 func TestNewCmdCreate(t *testing.T) {

@@ -3,7 +3,7 @@ package shared
 import (
 	"strings"
 
-	"github.com/cli/bb/v2/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 )
 
 func AuthTokenWriteable(authCfg gh.AuthConfig, hostname string) (string, bool) {

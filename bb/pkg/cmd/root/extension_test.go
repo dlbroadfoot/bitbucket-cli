@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/internal/update"
-	"github.com/cli/bb/v2/pkg/cmd/root"
-	"github.com/cli/bb/v2/pkg/extensions"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/update"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/root"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/extensions"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

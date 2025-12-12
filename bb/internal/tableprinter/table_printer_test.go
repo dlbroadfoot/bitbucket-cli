@@ -3,8 +3,8 @@ package tableprinter_test
 import (
 	"testing"
 
-	"github.com/cli/bb/v2/internal/tableprinter"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/tableprinter"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/stretchr/testify/require"
 )
 

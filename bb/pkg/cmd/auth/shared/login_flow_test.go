@@ -8,12 +8,12 @@ import (
 	"testing"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/internal/prompter"
-	"github.com/cli/bb/v2/internal/run"
-	"github.com/cli/bb/v2/pkg/cmd/auth/shared/gitcredentials"
-	"github.com/cli/bb/v2/pkg/httpmock"
-	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/pkg/ssh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/prompter"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/run"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/shared/gitcredentials"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/ssh"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

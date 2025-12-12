@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cli/bb/v2/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 )
 

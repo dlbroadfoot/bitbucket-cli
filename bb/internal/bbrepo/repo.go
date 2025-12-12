@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
 )
 
 // Interface describes an object that represents a Bitbucket repository.

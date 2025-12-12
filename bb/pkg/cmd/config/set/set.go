@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/internal/config"
-	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 

@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cli/bb/v2/pkg/httpmock"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

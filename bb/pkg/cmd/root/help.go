@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/internal/text"
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/text"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

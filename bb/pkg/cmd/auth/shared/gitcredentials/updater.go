@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/git"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
 )
 
 // An Updater is used to update the git credentials for a given hostname.

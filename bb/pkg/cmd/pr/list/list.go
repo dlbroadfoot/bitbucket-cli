@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/internal/bbrepo"
-	"github.com/cli/bb/v2/internal/tableprinter"
-	"github.com/cli/bb/v2/pkg/cmd/pr/shared"
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/tableprinter"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/shared"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 

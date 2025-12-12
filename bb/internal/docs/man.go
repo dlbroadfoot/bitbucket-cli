@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/bb/v2/internal/text"
-	"github.com/cli/bb/v2/pkg/cmd/root"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/text"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/root"
 	"github.com/cpuguy83/go-md2man/v2/md2man"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"

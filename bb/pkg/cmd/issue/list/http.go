@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/bbinstance"
-	"github.com/cli/bb/v2/internal/bbrepo"
-	"github.com/cli/bb/v2/pkg/cmd/issue/shared"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/shared"
 )
 
 func fetchIssues(client *http.Client, repo bbrepo.Interface, opts *ListOptions) ([]shared.Issue, error) {
@@ -103,4 +103,42 @@ func fetchIssues(client *http.Client, repo bbrepo.Interface, opts *ListOptions) 
 	}
 
 	return issues, nil
+}
+
+// FetchIssue fetches a single issue by ID
+func FetchIssue(client *http.Client, repo bbrepo.Interface, issueID int) (*shared.Issue, error) {
+	apiURL := fmt.Sprintf("%srepositories/%s/%s/issues/%d",
+		bbinstance.RESTPrefix(repo.RepoHost()),
+		repo.RepoWorkspace(),
+		repo.RepoSlug(),
+		issueID,
+	)
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		return nil, fmt.Errorf("issue #%d not found", issueID)
+	}
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	var issue shared.Issue
+	if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
+		return nil, err
+	}
+
+	return &issue, nil
 }

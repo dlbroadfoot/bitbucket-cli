@@ -3,7 +3,7 @@ package contract
 import (
 	"testing"
 
-	"github.com/cli/bb/v2/pkg/cmd/auth/shared"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/shared"
 	"github.com/stretchr/testify/require"
 )
 

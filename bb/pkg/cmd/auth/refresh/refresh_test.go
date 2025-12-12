@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cli/bb/v2/internal/config"
-	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/internal/prompter"
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/httpmock"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/prompter"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/google/shlex"
 	"github.com/stretchr/testify/require"
 )

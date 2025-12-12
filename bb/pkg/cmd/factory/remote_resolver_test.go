@@ -5,11 +5,11 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/cli/bb/v2/context"
-	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/internal/config"
-	"github.com/cli/bb/v2/internal/gh"
-	ghmock "github.com/cli/bb/v2/internal/gh/mock"
+	"github.com/dlbroadfoot/bitbucket-cli/context"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	ghmock "github.com/dlbroadfoot/bitbucket-cli/internal/gh/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

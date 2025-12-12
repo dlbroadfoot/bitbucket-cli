@@ -10,9 +10,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/pkg/jsoncolor"
-	"github.com/cli/bb/v2/pkg/set"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/jsoncolor"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/set"
 	"github.com/cli/go-gh/v2/pkg/jq"
 	"github.com/cli/go-gh/v2/pkg/template"
 	"github.com/spf13/cobra"

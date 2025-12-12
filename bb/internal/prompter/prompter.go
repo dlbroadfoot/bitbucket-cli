@@ -7,9 +7,9 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/charmbracelet/huh"
-	"github.com/cli/bb/v2/internal/ghinstance"
-	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/pkg/surveyext"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/surveyext"
 	ghPrompter "github.com/cli/go-gh/v2/pkg/prompter"
 )
 

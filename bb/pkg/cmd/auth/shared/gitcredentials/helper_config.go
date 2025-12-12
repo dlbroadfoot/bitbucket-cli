@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/internal/ghinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 	"github.com/google/shlex"
 )
 

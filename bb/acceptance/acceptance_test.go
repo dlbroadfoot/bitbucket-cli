@@ -13,7 +13,7 @@ import (
 
 	"math/rand"
 
-	"github.com/cli/bb/v2/internal/ghcmd"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghcmd"
 	"github.com/cli/go-internal/testscript"
 )
 

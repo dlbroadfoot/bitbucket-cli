@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 

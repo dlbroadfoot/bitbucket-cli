@@ -3,7 +3,7 @@ package root
 import (
 	"testing"
 
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/stretchr/testify/require"
 )
 

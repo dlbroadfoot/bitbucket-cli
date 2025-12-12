@@ -7,8 +7,8 @@ import (
 	"github.com/google/shlex"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 )
 
 func Test_NewCmdLogin(t *testing.T) {

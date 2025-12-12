@@ -12,8 +12,8 @@ endif
 
 ## The following tasks delegate to `script/build.go` so they can be run cross-platform.
 
-.PHONY: bin/gh$(EXE)
-bin/gh$(EXE): script/build$(EXE)
+.PHONY: bin/bb$(EXE)
+bin/bb$(EXE): script/build$(EXE)
 	@script/build$(EXE) $@
 
 script/build$(EXE): script/build.go
@@ -32,11 +32,11 @@ manpages: script/build$(EXE)
 	@$< $@
 
 .PHONY: completions
-completions: bin/gh$(EXE)
+completions: bin/bb$(EXE)
 	mkdir -p ./share/bash-completion/completions ./share/fish/vendor_completions.d ./share/zsh/site-functions
-	bin/gh$(EXE) completion -s bash > ./share/bash-completion/completions/gh
-	bin/gh$(EXE) completion -s fish > ./share/fish/vendor_completions.d/gh.fish
-	bin/gh$(EXE) completion -s zsh > ./share/zsh/site-functions/_gh
+	bin/bb$(EXE) completion -s bash > ./share/bash-completion/completions/bb
+	bin/bb$(EXE) completion -s fish > ./share/fish/vendor_completions.d/bb.fish
+	bin/bb$(EXE) completion -s zsh > ./share/zsh/site-functions/_bb
 
 # just convenience tasks around `go test`
 .PHONY: test
@@ -80,24 +80,24 @@ datadir := ${prefix}/share
 mandir  := ${datadir}/man
 
 .PHONY: install
-install: bin/gh manpages completions
+install: bin/bb manpages completions
 	install -d ${DESTDIR}${bindir}
-	install -m755 bin/gh ${DESTDIR}${bindir}/
+	install -m755 bin/bb ${DESTDIR}${bindir}/
 	install -d ${DESTDIR}${mandir}/man1
 	install -m644 ./share/man/man1/* ${DESTDIR}${mandir}/man1/
 	install -d ${DESTDIR}${datadir}/bash-completion/completions
-	install -m644 ./share/bash-completion/completions/gh ${DESTDIR}${datadir}/bash-completion/completions/gh
+	install -m644 ./share/bash-completion/completions/bb ${DESTDIR}${datadir}/bash-completion/completions/bb
 	install -d ${DESTDIR}${datadir}/fish/vendor_completions.d
-	install -m644 ./share/fish/vendor_completions.d/gh.fish ${DESTDIR}${datadir}/fish/vendor_completions.d/gh.fish
+	install -m644 ./share/fish/vendor_completions.d/bb.fish ${DESTDIR}${datadir}/fish/vendor_completions.d/bb.fish
 	install -d ${DESTDIR}${datadir}/zsh/site-functions
-	install -m644 ./share/zsh/site-functions/_gh ${DESTDIR}${datadir}/zsh/site-functions/_gh
+	install -m644 ./share/zsh/site-functions/_bb ${DESTDIR}${datadir}/zsh/site-functions/_bb
 
 .PHONY: uninstall
 uninstall:
-	rm -f ${DESTDIR}${bindir}/gh ${DESTDIR}${mandir}/man1/gh.1 ${DESTDIR}${mandir}/man1/gh-*.1
-	rm -f ${DESTDIR}${datadir}/bash-completion/completions/gh
-	rm -f ${DESTDIR}${datadir}/fish/vendor_completions.d/gh.fish
-	rm -f ${DESTDIR}${datadir}/zsh/site-functions/_gh
+	rm -f ${DESTDIR}${bindir}/bb ${DESTDIR}${mandir}/man1/bb.1 ${DESTDIR}${mandir}/man1/bb-*.1
+	rm -f ${DESTDIR}${datadir}/bash-completion/completions/bb
+	rm -f ${DESTDIR}${datadir}/fish/vendor_completions.d/bb.fish
+	rm -f ${DESTDIR}${datadir}/zsh/site-functions/_bb
 
 .PHONY: macospkg
 macospkg: manpages completions

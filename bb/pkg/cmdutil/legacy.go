@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cli/bb/v2/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 )
 
 // TODO: consider passing via Factory

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/api"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
 	"github.com/cli/go-gh/v2/pkg/asciisanitizer"
 	"golang.org/x/text/transform"
 )

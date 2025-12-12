@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cli/bb/v2/internal/bbrepo"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 )
 
 func ResolveRemotesToRepos(remotes Remotes, base string) (*ResolvedRemotes, error) {

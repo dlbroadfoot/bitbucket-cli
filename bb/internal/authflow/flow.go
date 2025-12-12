@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/bbinstance"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 )
 
 // AuthFlowResult contains the result of an authentication flow.

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/bb/v2/pkg/extensions"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/extensions"
 	"github.com/hashicorp/go-version"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/yaml.v3"

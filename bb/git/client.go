@@ -16,7 +16,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cli/bb/v2/internal/ghinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 	"github.com/cli/safeexec"
 )
 

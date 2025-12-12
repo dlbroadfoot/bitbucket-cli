@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/ghinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
 	"github.com/cli/go-gh/v2/pkg/repository"
 )

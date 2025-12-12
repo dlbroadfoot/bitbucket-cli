@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/bb/v2/internal/bbinstance"
-	"github.com/cli/bb/v2/utils"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/utils"
 )
 
 type tokenGetter interface {

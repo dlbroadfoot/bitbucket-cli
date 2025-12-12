@@ -6,19 +6,27 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	aliasCmd "github.com/cli/bb/v2/pkg/cmd/alias"
-	"github.com/cli/bb/v2/pkg/cmd/alias/shared"
-	apiCmd "github.com/cli/bb/v2/pkg/cmd/api"
-	authCmd "github.com/cli/bb/v2/pkg/cmd/auth"
-	completionCmd "github.com/cli/bb/v2/pkg/cmd/completion"
-	configCmd "github.com/cli/bb/v2/pkg/cmd/config"
-	"github.com/cli/bb/v2/pkg/cmd/factory"
-	issueCmd "github.com/cli/bb/v2/pkg/cmd/issue"
-	prCmd "github.com/cli/bb/v2/pkg/cmd/pr"
-	projectCmd "github.com/cli/bb/v2/pkg/cmd/project"
-	repoCmd "github.com/cli/bb/v2/pkg/cmd/repo"
-	versionCmd "github.com/cli/bb/v2/pkg/cmd/version"
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	aliasCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/alias"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/alias/shared"
+	apiCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/api"
+	authCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth"
+	browseCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/browse"
+	completionCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/completion"
+	configCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/config"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/factory"
+	issueCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue"
+	pipelineCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pipeline"
+	prCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr"
+	projectCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/project"
+	repoCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/repo"
+	searchCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/search"
+	secretCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/secret"
+	sshKeyCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/ssh-key"
+	statusCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/status"
+	variableCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/variable"
+	versionCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/version"
+	workspaceCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/workspace"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 )
@@ -100,9 +108,17 @@ func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) (*cobra.Command, 
 	repoResolvingCmdFactory.BaseRepo = factory.SmartBaseRepoFunc(f)
 
 	cmd.AddCommand(apiCmd.NewCmdApi(&repoResolvingCmdFactory, nil))
+	cmd.AddCommand(browseCmd.NewCmdBrowse(&repoResolvingCmdFactory, nil))
 	cmd.AddCommand(issueCmd.NewCmdIssue(&repoResolvingCmdFactory))
+	cmd.AddCommand(pipelineCmd.NewCmdPipeline(&repoResolvingCmdFactory))
 	cmd.AddCommand(prCmd.NewCmdPR(&repoResolvingCmdFactory))
 	cmd.AddCommand(repoCmd.NewCmdRepo(&repoResolvingCmdFactory))
+	cmd.AddCommand(searchCmd.NewCmdSearch(&repoResolvingCmdFactory))
+	cmd.AddCommand(secretCmd.NewCmdSecret(&repoResolvingCmdFactory))
+	cmd.AddCommand(sshKeyCmd.NewCmdSSHKey(&repoResolvingCmdFactory))
+	cmd.AddCommand(statusCmd.NewCmdStatus(&repoResolvingCmdFactory, nil))
+	cmd.AddCommand(variableCmd.NewCmdVariable(&repoResolvingCmdFactory))
+	cmd.AddCommand(workspaceCmd.NewCmdWorkspace(&repoResolvingCmdFactory))
 
 	// Help topics
 	var referenceCmd *cobra.Command

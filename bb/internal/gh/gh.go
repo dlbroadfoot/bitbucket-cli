@@ -10,7 +10,7 @@
 package gh
 
 import (
-	o "github.com/cli/bb/v2/pkg/option"
+	o "github.com/dlbroadfoot/bitbucket-cli/pkg/option"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 )
 

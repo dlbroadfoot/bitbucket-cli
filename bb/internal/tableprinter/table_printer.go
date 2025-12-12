@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/bb/v2/internal/text"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/text"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
 )
 

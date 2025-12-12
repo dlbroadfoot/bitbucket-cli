@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/config"
-	cmdClearCache "github.com/cli/bb/v2/pkg/cmd/config/clear-cache"
-	cmdGet "github.com/cli/bb/v2/pkg/cmd/config/get"
-	cmdList "github.com/cli/bb/v2/pkg/cmd/config/list"
-	cmdSet "github.com/cli/bb/v2/pkg/cmd/config/set"
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
+	cmdClearCache "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/config/clear-cache"
+	cmdGet "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/config/get"
+	cmdList "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/config/list"
+	cmdSet "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/config/set"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
 

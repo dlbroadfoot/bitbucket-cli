@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cli/bb/v2/internal/safepaths"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/safepaths"
 	"github.com/stretchr/testify/require"
 )
 

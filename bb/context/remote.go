@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
 )
 
 // Remotes represents a set of git remotes

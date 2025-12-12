@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/Netflix/go-expect"
-	"github.com/cli/bb/v2/internal/prompter"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/prompter"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/creack/pty"
 	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/assert"

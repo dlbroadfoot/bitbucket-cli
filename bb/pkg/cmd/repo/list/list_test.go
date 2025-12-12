@@ -13,14 +13,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cli/bb/v2/internal/config"
-	fd "github.com/cli/bb/v2/internal/featuredetection"
-	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/httpmock"
-	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/pkg/jsonfieldstest"
-	"github.com/cli/bb/v2/test"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
+	fd "github.com/dlbroadfoot/bitbucket-cli/internal/featuredetection"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/jsonfieldstest"
+	"github.com/dlbroadfoot/bitbucket-cli/test"
 )
 
 func TestJSONFields(t *testing.T) {

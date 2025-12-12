@@ -2,11 +2,13 @@ name: Code Scanning
 
 on:
   push:
-    branches: [trunk]
+    branches: [trunk, main]
+    paths:
+      - 'bb/**'
   pull_request:
-    branches: [trunk]
-    paths-ignore:
-      - '**/*.md'
+    branches: [trunk, main]
+    paths:
+      - 'bb/**'
   schedule:
     - cron: "0 0 * * 0"
 
@@ -15,23 +17,26 @@ permissions:
   contents: read  # for actions/checkout to fetch code
   security-events: write  # for github/codeql-action/analyze to upload SARIF results
 
+defaults:
+  run:
+    working-directory: bb
+
 jobs:
   CodeQL-Build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        language: ['go', 'actions']
+        language: ['go']
 
     steps:
       - name: Check out code
         uses: actions/checkout@v6
 
       - name: Setup Go
-        if: matrix.language == 'go'
         uses: actions/setup-go@v6
         with:
-          go-version-file: "go.mod"
+          go-version-file: "bb/go.mod"
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -47,11 +52,10 @@ jobs:
           output: sarif-results
 
       - name: Filter SARIF for third-party code
-        if: matrix.language == 'go'
         uses: advanced-security/filter-sarif@f3b8118a9349d88f7b1c0c488476411145b6270d # v1.0.1
         with:
           patterns: |
-            -third-party/**
+            -bb/third-party/**
           input: sarif-results/${{ matrix.language }}.sarif
           output: sarif-results/${{ matrix.language }}.sarif
 

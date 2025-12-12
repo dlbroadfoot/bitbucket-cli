@@ -1,105 +1,185 @@
-# GitHub CLI
+# Bitbucket CLI
 
-`gh` is GitHub on the command line. It brings pull requests, issues, and other GitHub concepts to the terminal next to where you are already working with `git` and your code.
+`bb` is Bitbucket on the command line. It brings pull requests, issues, pipelines, and other Bitbucket concepts to the terminal next to where you are already working with `git` and your code.
 
-![screenshot of gh pr status](https://user-images.githubusercontent.com/98482/84171218-327e7a80-aa40-11ea-8cd1-5177fc2d0e72.png)
+## Features
 
-GitHub CLI is supported for users on GitHub.com, GitHub Enterprise Cloud, and GitHub Enterprise Server 2.20+ with support for macOS, Windows, and Linux.
+- **Pull Requests**: Create, view, list, checkout, merge, and close pull requests
+- **Issues**: Create, view, list, edit, and manage issues
+- **Repositories**: Clone, create, fork, view, and manage repositories
+- **Pipelines**: View, run, and cancel pipeline builds
+- **Projects**: List and view Bitbucket projects
+- **Workspaces**: List and view workspaces
+- **Search**: Search for repositories and code
+- **SSH Keys**: Manage SSH keys for your account
+- **Secrets & Variables**: Manage pipeline secrets and variables
 
-## Documentation
-
-For [installation options see below](#installation), for usage instructions [see the manual]( https://cli.github.com/manual/).
-
-## Contributing
-
-If anything feels off or if you feel that some functionality is missing, please check out the [contributing page](.github/CONTRIBUTING.md). There you will find instructions for sharing your feedback, building the tool locally, and submitting pull requests to the project.
-
-If you are a hubber and are interested in shipping new commands for the CLI, check out our [doc on internal contributions](docs/working-with-us.md)
-
-<!-- this anchor is linked to from elsewhere, so avoid renaming it -->
 ## Installation
 
-### [macOS](docs/install_macos.md)
+### From Source (Go 1.21+)
 
-- [Homebrew](docs/install_macos.md#homebrew)
-- [Precompiled binaries](docs/install_macos.md#precompiled-binaries) on [releases page][]
-
-For additional macOS packages and installers, see [community-supported docs](docs/install_macos.md#community-unofficial)
-
-### [Linux & Unix](docs/install_linux.md)
-
-- [Debian, Raspberry Pi, Ubuntu](docs/install_linux.md#debian)
-- [Amazon Linux, CentOS, Fedora, openSUSE, RHEL, SUSE](docs/install_linux.md#rpm)
-- [Precompiled binaries](docs/install_linux.md#precompiled-binaries) on [releases page][]
-
-For additional Linux & Unix packages and installers, see [community-supported docs](docs/install_linux.md#community-unofficial)
-
-### [Windows](docs/install_windows.md)
-
-- [WinGet](docs/install_windows.md#winget)
-- [Precompiled binaries](docs/install_windows.md#precompiled-binaries) on [releases page][]
-
-For additional Windows packages and installers, see [community-supported docs](docs/install_windows.md#community-unofficial)
-
-### Build from source
-
-See here on how to [build GitHub CLI from source](docs/install_source.md).
-
-### GitHub Codespaces
-
-To add GitHub CLI to your codespace, add the following to your [devcontainer file](https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/adding-features-to-a-devcontainer-file):
-
-```json
-"features": {
-  "ghcr.io/devcontainers/features/github-cli:1": {}
-}
+```bash
+go install github.com/dlbroadfoot/bitbucket-cli/cmd/bb@latest
 ```
 
-### GitHub Actions
+### From Releases
 
-[GitHub-hosted runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners) have the GitHub CLI pre-installed, which is updated weekly.
+Download pre-built binaries from the [releases page](https://github.com/dlbroadfoot/bitbucket-cli/releases).
 
-If a specific version is needed, your GitHub Actions workflow will need to install it based on the [macOS](#macos), [Linux & Unix](#linux--unix), or [Windows](#windows) instructions above.
+#### macOS
 
-For information on all pre-installed tools, see [`actions/runner-images`](https://github.com/actions/runner-images)
+```bash
+# Download and extract (Intel)
+curl -LO https://github.com/dlbroadfoot/bitbucket-cli/releases/latest/download/bb_VERSION_macOS_x86_64.zip
+unzip bb_*_macOS_x86_64.zip
+sudo mv bb_*/bb /usr/local/bin/
 
-### Verification of binaries
+# Download and extract (Apple Silicon)
+curl -LO https://github.com/dlbroadfoot/bitbucket-cli/releases/latest/download/bb_VERSION_macOS_arm64.zip
+unzip bb_*_macOS_arm64.zip
+sudo mv bb_*/bb /usr/local/bin/
+```
 
-Since version 2.50.0, `gh` has been producing [Build Provenance Attestation](https://github.blog/changelog/2024-06-25-artifact-attestations-is-generally-available/), enabling a cryptographically verifiable paper-trail back to the origin GitHub repository, git revision, and build instructions used. The build provenance attestations are signed and rely on Public Good [Sigstore](https://www.sigstore.dev/) for PKI.
+#### Linux
 
-There are two common ways to verify a downloaded release, depending on whether `gh` is already installed or not. If `gh` is installed, it's trivial to verify a new release:
+```bash
+# Download and extract (x86_64)
+curl -LO https://github.com/dlbroadfoot/bitbucket-cli/releases/latest/download/bb_VERSION_linux_x86_64.tar.gz
+tar xzf bb_*_linux_x86_64.tar.gz
+sudo mv bb_*/bb /usr/local/bin/
 
-- **Option 1: Using `gh` if already installed:**
+# Or install via .deb package
+curl -LO https://github.com/dlbroadfoot/bitbucket-cli/releases/latest/download/bb_VERSION_linux_amd64.deb
+sudo dpkg -i bb_*_linux_amd64.deb
 
-  ```shell
-  $ gh at verify -R cli/cli gh_2.62.0_macOS_arm64.zip
-  Loaded digest sha256:fdb77f31b8a6dd23c3fd858758d692a45f7fc76383e37d475bdcae038df92afc for file://gh_2.62.0_macOS_arm64.zip
-  Loaded 1 attestation from GitHub API
-  ✓ Verification succeeded!
+# Or install via .rpm package
+curl -LO https://github.com/dlbroadfoot/bitbucket-cli/releases/latest/download/bb_VERSION_linux_amd64.rpm
+sudo rpm -i bb_*_linux_amd64.rpm
+```
 
-  sha256:fdb77f31b8a6dd23c3fd858758d692a45f7fc76383e37d475bdcae038df92afc was attested by:
-  REPO     PREDICATE_TYPE                  WORKFLOW
-  cli/cli  https://slsa.dev/provenance/v1  .github/workflows/deployment.yml@refs/heads/trunk
-  ```
+#### Windows
 
-- **Option 2: Using Sigstore [`cosign`](https://github.com/sigstore/cosign):**
+Download the `.zip` file from the [releases page](https://github.com/dlbroadfoot/bitbucket-cli/releases) and add the extracted directory to your PATH.
 
-  To perform this, download the [attestation](https://github.com/cli/cli/attestations) for the downloaded release and use cosign to verify the authenticity of the downloaded release:
+### Build from Source
 
-  ```shell
-  $ cosign verify-blob-attestation --bundle cli-cli-attestation-3120304.sigstore.json \
-        --new-bundle-format \
-        --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
-        --certificate-identity="https://github.com/cli/cli/.github/workflows/deployment.yml@refs/heads/trunk" \
-        gh_2.62.0_macOS_arm64.zip
-  Verified OK
-  ```
+```bash
+git clone https://github.com/dlbroadfoot/bitbucket-cli.git
+cd bitbucket-cli
+make bin/bb
+./bin/bb --version
+```
 
-## Comparison with hub
+## Authentication
 
-For many years, [hub](https://github.com/github/hub) was the unofficial GitHub CLI tool. `gh` is a new project that helps us explore
-what an official GitHub CLI tool can look like with a fundamentally different design. While both
-tools bring GitHub to the terminal, `hub` behaves as a proxy to `git`, and `gh` is a standalone
-tool. Check out our [more detailed explanation](docs/gh-vs-hub.md) to learn more.
+Before using `bb`, authenticate with Bitbucket:
 
-[releases page]: https://github.com/cli/cli/releases/latest
+```bash
+bb auth login
+```
+
+This will guide you through creating an App Password with the necessary permissions.
+
+**Required App Password Permissions:**
+- Account: Read
+- Repositories: Read, Write
+- Pull Requests: Read, Write
+- Issues: Read, Write (if using issue tracker)
+- Pipelines: Read, Write (if using pipelines)
+
+## Quick Start
+
+```bash
+# Authenticate with Bitbucket
+bb auth login
+
+# List repositories in a workspace
+bb repo list --workspace myworkspace
+
+# Clone a repository
+bb repo clone myworkspace/myrepo
+
+# View the current repository in browser
+bb browse
+
+# List pull requests
+bb pr list
+
+# Create a pull request
+bb pr create --title "My PR" --body "Description"
+
+# View pipeline runs
+bb pipeline list
+
+# Search for repositories
+bb search repos "api" --workspace myworkspace
+```
+
+## Commands
+
+### Core Commands
+- `bb auth` - Authenticate bb and git with Bitbucket
+- `bb repo` - Manage repositories (list, clone, create, view, edit, delete, sync, fork)
+- `bb pr` - Manage pull requests (list, view, create, checkout, merge, close, diff, checks)
+- `bb issue` - Manage issues (list, view, create, edit, close, reopen, comment)
+
+### Additional Commands
+- `bb pipeline` - Manage pipelines (list, view, run, cancel)
+- `bb project` - Work with Bitbucket projects (list, view, create)
+- `bb workspace` - Manage workspaces (list, view)
+- `bb search` - Search for repositories and code
+- `bb ssh-key` - Manage SSH keys (list, add, delete)
+- `bb secret` - Manage repository secrets
+- `bb variable` - Manage pipeline variables
+- `bb browse` - Open repository in browser
+- `bb api` - Make authenticated API requests
+- `bb status` - View status across workspaces
+- `bb config` - Manage configuration
+- `bb alias` - Create command shortcuts
+
+## Configuration
+
+Configuration is stored in `~/.config/bb/` (Linux/macOS) or `%APPDATA%\bb\` (Windows).
+
+```bash
+# View current configuration
+bb config list
+
+# Set a configuration value
+bb config set editor vim
+
+# Get a configuration value
+bb config get editor
+```
+
+## Shell Completion
+
+```bash
+# Bash
+bb completion -s bash > /etc/bash_completion.d/bb
+
+# Zsh
+bb completion -s zsh > "${fpath[1]}/_bb"
+
+# Fish
+bb completion -s fish > ~/.config/fish/completions/bb.fish
+
+# PowerShell
+bb completion -s powershell >> $PROFILE
+```
+
+## Environment Variables
+
+- `BB_TOKEN` - Authentication token (alternative to `bb auth login`)
+- `BB_HOST` - Bitbucket host (default: bitbucket.org)
+- `BB_REPO` - Default repository in `WORKSPACE/REPO` format
+- `BB_PAGER` - Pager program (default: less)
+- `NO_COLOR` - Disable colored output
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+This project is based on the excellent [GitHub CLI](https://github.com/cli/cli) architecture.

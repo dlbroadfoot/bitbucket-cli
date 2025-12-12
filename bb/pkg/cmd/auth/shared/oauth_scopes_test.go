@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/cli/bb/v2/pkg/httpmock"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 )
 

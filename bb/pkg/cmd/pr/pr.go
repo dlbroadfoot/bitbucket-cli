@@ -2,13 +2,19 @@ package pr
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	checkoutCmd "github.com/cli/bb/v2/pkg/cmd/pr/checkout"
-	commentCmd "github.com/cli/bb/v2/pkg/cmd/pr/comment"
-	createCmd "github.com/cli/bb/v2/pkg/cmd/pr/create"
-	listCmd "github.com/cli/bb/v2/pkg/cmd/pr/list"
-	mergeCmd "github.com/cli/bb/v2/pkg/cmd/pr/merge"
-	viewCmd "github.com/cli/bb/v2/pkg/cmd/pr/view"
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	checkoutCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/checkout"
+	checksCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/checks"
+	closeCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/close"
+	commentCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/comment"
+	createCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/create"
+	diffCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/diff"
+	editCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/edit"
+	listCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/list"
+	mergeCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/merge"
+	reviewCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/review"
+	statusCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/status"
+	viewCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/view"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
 
@@ -37,10 +43,16 @@ func NewCmdPR(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(listCmd.NewCmdList(f, nil))
 	cmd.AddCommand(viewCmd.NewCmdView(f, nil))
+	cmd.AddCommand(statusCmd.NewCmdStatus(f, nil))
+	cmd.AddCommand(checksCmd.NewCmdChecks(f, nil))
 	cmd.AddCommand(createCmd.NewCmdCreate(f, nil))
+	cmd.AddCommand(editCmd.NewCmdEdit(f, nil))
 	cmd.AddCommand(mergeCmd.NewCmdMerge(f, nil))
 	cmd.AddCommand(checkoutCmd.NewCmdCheckout(f, nil))
+	cmd.AddCommand(closeCmd.NewCmdClose(f, nil))
 	cmd.AddCommand(commentCmd.NewCmdComment(f, nil))
+	cmd.AddCommand(diffCmd.NewCmdDiff(f, nil))
+	cmd.AddCommand(reviewCmd.NewCmdReview(f, nil))
 
 	return cmd
 }

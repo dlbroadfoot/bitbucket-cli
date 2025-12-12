@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"testing"
 
-	o "github.com/cli/bb/v2/pkg/option"
+	o "github.com/dlbroadfoot/bitbucket-cli/pkg/option"
 	"github.com/stretchr/testify/require"
 )
 

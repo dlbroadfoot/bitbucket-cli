@@ -9,13 +9,13 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
 
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/bbinstance"
-	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/internal/tableprinter"
-	"github.com/cli/bb/v2/internal/text"
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/api"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/tableprinter"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/text"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 )
 
 type ListOptions struct {

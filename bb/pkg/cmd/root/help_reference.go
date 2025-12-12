@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/pkg/markdown"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/markdown"
 	"github.com/spf13/cobra"
 )
 

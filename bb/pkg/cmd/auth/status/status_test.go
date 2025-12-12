@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 )
 
 func Test_NewCmdStatus(t *testing.T) {

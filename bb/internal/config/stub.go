@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cli/bb/v2/internal/gh"
-	ghmock "github.com/cli/bb/v2/internal/gh/mock"
-	"github.com/cli/bb/v2/internal/keyring"
-	o "github.com/cli/bb/v2/pkg/option"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	ghmock "github.com/dlbroadfoot/bitbucket-cli/internal/gh/mock"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/keyring"
+	o "github.com/dlbroadfoot/bitbucket-cli/pkg/option"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 )
 

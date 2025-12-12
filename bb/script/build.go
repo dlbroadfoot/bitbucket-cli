@@ -1,15 +1,15 @@
-// Build tasks for the GitHub CLI project.
+// Build tasks for the Bitbucket CLI project.
 //
 // Usage:  go run script/build.go [<tasks>...] [<env>...]
 //
 // Known tasks are:
 //
-//   bin/gh:
+//   bin/bb:
 //     Builds the main executable.
 //     Supported environment variables:
-//     - GH_VERSION: determined from source by default
-//     - GH_OAUTH_CLIENT_ID
-//     - GH_OAUTH_CLIENT_SECRET
+//     - BB_VERSION: determined from source by default
+//     - BB_OAUTH_CLIENT_ID
+//     - BB_OAUTH_CLIENT_SECRET
 //     - SOURCE_DATE_EPOCH: enables reproducible builds
 //     - GO_LDFLAGS
 //
@@ -38,7 +38,7 @@ import (
 )
 
 var tasks = map[string]func(string) error{
-	"bin/gh": func(exe string) error {
+	"bin/bb": func(exe string) error {
 		info, err := os.Stat(exe)
 		if err == nil && !sourceFilesLaterThan(info.ModTime()) {
 			fmt.Printf("%s: `%s` is up to date.\n", self, exe)
@@ -46,11 +46,11 @@ var tasks = map[string]func(string) error{
 		}
 
 		ldflags := os.Getenv("GO_LDFLAGS")
-		ldflags = fmt.Sprintf("-X github.com/cli/bb/v2/internal/build.Version=%s %s", version(), ldflags)
-		ldflags = fmt.Sprintf("-X github.com/cli/bb/v2/internal/build.Date=%s %s", date(), ldflags)
-		if oauthSecret := os.Getenv("GH_OAUTH_CLIENT_SECRET"); oauthSecret != "" {
-			ldflags = fmt.Sprintf("-X github.com/cli/bb/v2/internal/authflow.oauthClientSecret=%s %s", oauthSecret, ldflags)
-			ldflags = fmt.Sprintf("-X github.com/cli/bb/v2/internal/authflow.oauthClientID=%s %s", os.Getenv("GH_OAUTH_CLIENT_ID"), ldflags)
+		ldflags = fmt.Sprintf("-X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version=%s %s", version(), ldflags)
+		ldflags = fmt.Sprintf("-X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date=%s %s", date(), ldflags)
+		if oauthSecret := os.Getenv("BB_OAUTH_CLIENT_SECRET"); oauthSecret != "" {
+			ldflags = fmt.Sprintf("-X github.com/dlbroadfoot/bitbucket-cli/internal/authflow.oauthClientSecret=%s %s", oauthSecret, ldflags)
+			ldflags = fmt.Sprintf("-X github.com/dlbroadfoot/bitbucket-cli/internal/authflow.oauthClientID=%s %s", os.Getenv("BB_OAUTH_CLIENT_ID"), ldflags)
 		}
 
 		buildTags, _ := os.LookupEnv("GO_BUILDTAGS")
@@ -59,7 +59,7 @@ var tasks = map[string]func(string) error{
 		if buildTags != "" {
 			args = append(args, "-tags", buildTags)
 		}
-		args = append(args, "-ldflags", ldflags, "-o", exe, "./cmd/gh")
+		args = append(args, "-ldflags", ldflags, "-o", exe, "./cmd/bb")
 
 		return run(args...)
 	},
@@ -85,9 +85,9 @@ func main() {
 
 	if len(args) < 2 {
 		if isWindowsTarget() {
-			args = append(args, filepath.Join("bin", "gh.exe"))
+			args = append(args, filepath.Join("bin", "bb.exe"))
 		} else {
-			args = append(args, "bin/gh")
+			args = append(args, "bin/bb")
 		}
 	}
 
@@ -123,7 +123,7 @@ func isWindowsTarget() bool {
 }
 
 func version() string {
-	if versionEnv := os.Getenv("GH_VERSION"); versionEnv != "" {
+	if versionEnv := os.Getenv("BB_VERSION"); versionEnv != "" {
 		return versionEnv
 	}
 	if desc, err := cmdOutput("git", "describe", "--tags"); err == nil {

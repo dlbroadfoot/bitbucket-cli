@@ -1,98 +1,110 @@
-project_name: gh
+# GoReleaser configuration for Bitbucket CLI
+# Run: goreleaser release --clean
+# Test: goreleaser release --snapshot --clean
+
+version: 2
+project_name: bb
 
 release:
   prerelease: auto
-  draft: true # we only publish after the Windows MSI gets uploaded
-  name_template: "GitHub CLI {{.Version}}"
+  draft: false
+  name_template: "Bitbucket CLI {{.Version}}"
 
 before:
   hooks:
-    - >- # The linux and windows archives package the manpages below
-      {{ if eq .Runtime.Goos "windows" }}echo{{ end }} make manpages GH_VERSION={{.Version}}
-    - >- # On linux the completions are used in nfpms below, but on macos they are used outside in the deployment build.
-      {{ if eq .Runtime.Goos "windows" }}echo{{ end }} make completions
-    - >- # We need to create the `.syso` files (per architecture) to embed Windows resources (version info)
-      {{ if ne .Runtime.Goos "windows" }}echo{{ end }} pwsh '.\script\gen-winres.ps1' '{{ .Version }} ({{time "2006-01-02"}})' '{{ .Version }}' '.\script\versioninfo.template.json' '.\cmd\gh\'
+    - go mod tidy
+
 builds:
-  - id: macos #build:macos
+  - id: macos
     goos: [darwin]
     goarch: [amd64, arm64]
-    hooks:
-      post:
-        - cmd: ./script/sign '{{ .Path }}'
-          output: true
-    binary: bin/gh
-    main: ./cmd/gh
+    binary: bb
+    main: ./cmd/bb
+    env:
+      - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/cli/cli/v2/internal/build.Version={{.Version}} -X github.com/cli/cli/v2/internal/build.Date={{time "2006-01-02"}}
+      - -s -w -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version={{.Version}} -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date={{time "2006-01-02"}}
 
-  - id: linux #build:linux
+  - id: linux
     goos: [linux]
     goarch: [386, arm, amd64, arm64]
     env:
       - CGO_ENABLED=0
-    binary: bin/gh
-    main: ./cmd/gh
+    binary: bb
+    main: ./cmd/bb
     ldflags:
-      - -s -w -X github.com/cli/cli/v2/internal/build.Version={{.Version}} -X github.com/cli/cli/v2/internal/build.Date={{time "2006-01-02"}}
+      - -s -w -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version={{.Version}} -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date={{time "2006-01-02"}}
 
-  - id: windows #build:windows
+  - id: windows
     goos: [windows]
     goarch: [386, amd64, arm64]
-    hooks:
-      post:
-        - cmd: pwsh .\script\sign.ps1 '{{ .Path }}'
-          output: true
-    binary: bin/gh
-    main: ./cmd/gh
+    binary: bb
+    main: ./cmd/bb
     ldflags:
-      - -s -w -X github.com/cli/cli/v2/internal/build.Version={{.Version}} -X github.com/cli/cli/v2/internal/build.Date={{time "2006-01-02"}}
+      - -s -w -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version={{.Version}} -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date={{time "2006-01-02"}}
 
 archives:
   - id: linux-archive
     builds: [linux]
-    name_template: "gh_{{ .Version }}_linux_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: "bb_{{ .Version }}_linux_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: true
     format: tar.gz
-    rlcp: true
     files:
       - LICENSE
-      - ./share/man/man1/gh*.1
+      - README.md
   - id: macos-archive
     builds: [macos]
-    name_template: "gh_{{ .Version }}_macOS_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: "bb_{{ .Version }}_macOS_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: true
     format: zip
-    rlcp: true
     files:
       - LICENSE
-      - ./share/man/man1/gh*.1
+      - README.md
   - id: windows-archive
     builds: [windows]
-    name_template: "gh_{{ .Version }}_windows_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: "bb_{{ .Version }}_windows_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: false
     format: zip
-    rlcp: true
     files:
       - LICENSE
+      - README.md
 
-nfpms: #build:linux
+nfpms:
   - license: MIT
-    maintainer: GitHub
-    homepage: https://github.com/cli/cli
-    bindir: /usr
+    maintainer: dlbroadfoot
+    homepage: https://github.com/dlbroadfoot/bitbucket-cli
+    bindir: /usr/bin
     dependencies:
       - git
-    description: GitHub’s official command line tool.
+    description: Work seamlessly with Bitbucket from the command line.
     formats:
       - deb
       - rpm
-    contents:
-      - src: "./share/man/man1/gh*.1"
-        dst: "/usr/share/man/man1"
-      - src: "./share/bash-completion/completions/gh"
-        dst: "/usr/share/bash-completion/completions/gh"
-      - src: "./share/fish/vendor_completions.d/gh.fish"
-        dst: "/usr/share/fish/vendor_completions.d/gh.fish"
-      - src: "./share/zsh/site-functions/_gh"
-        dst: "/usr/share/zsh/site-functions/_gh"
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+# Homebrew tap (optional - requires dlbroadfoot/homebrew-tap repo)
+# brews:
+#   - name: bb
+#     repository:
+#       owner: dlbroadfoot
+#       name: homebrew-tap
+#     directory: Formula
+#     homepage: "https://github.com/dlbroadfoot/bitbucket-cli"
+#     description: "Bitbucket CLI - Work seamlessly with Bitbucket from the command line"
+#     license: "MIT"
+#     install: |
+#       bin.install "bb"
+#     test: |
+#       system "#{bin}/bb", "--version"

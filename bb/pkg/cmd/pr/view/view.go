@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/bb/v2/internal/bbrepo"
-	"github.com/cli/bb/v2/internal/browser"
-	"github.com/cli/bb/v2/internal/text"
-	"github.com/cli/bb/v2/pkg/cmd/pr/list"
-	"github.com/cli/bb/v2/pkg/cmd/pr/shared"
-	"github.com/cli/bb/v2/pkg/cmdutil"
-	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/pkg/markdown"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/browser"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/text"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/list"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/shared"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/markdown"
 	"github.com/spf13/cobra"
 )
 

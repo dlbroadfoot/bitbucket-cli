@@ -8,10 +8,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/run"
-	"github.com/cli/bb/v2/internal/text"
-	"github.com/cli/bb/v2/pkg/findsh"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/run"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/text"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/findsh"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 )

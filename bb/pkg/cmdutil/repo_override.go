@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
 	"github.com/spf13/cobra"
 )
 

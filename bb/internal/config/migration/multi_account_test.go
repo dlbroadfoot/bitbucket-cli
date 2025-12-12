@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cli/bb/v2/internal/config/migration"
-	"github.com/cli/bb/v2/internal/keyring"
-	"github.com/cli/bb/v2/pkg/httpmock"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/config/migration"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/keyring"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
 	"github.com/cli/go-gh/v2/pkg/config"
 	"github.com/stretchr/testify/require"
 )

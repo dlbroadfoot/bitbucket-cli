@@ -1,10 +1,14 @@
 package issue
 
 import (
-	"github.com/cli/bb/v2/pkg/cmd/issue/create"
-	"github.com/cli/bb/v2/pkg/cmd/issue/list"
-	"github.com/cli/bb/v2/pkg/cmd/issue/view"
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/close"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/comment"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/create"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/edit"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/list"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/reopen"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/issue/view"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +35,10 @@ $ bb issue create
 	cmd.AddCommand(list.NewCmdList(f, nil))
 	cmd.AddCommand(view.NewCmdView(f, nil))
 	cmd.AddCommand(create.NewCmdCreate(f, nil))
+	cmd.AddCommand(edit.NewCmdEdit(f, nil))
+	cmd.AddCommand(close.NewCmdClose(f, nil))
+	cmd.AddCommand(reopen.NewCmdReopen(f, nil))
+	cmd.AddCommand(comment.NewCmdComment(f, nil))
 
 	return cmd
 }

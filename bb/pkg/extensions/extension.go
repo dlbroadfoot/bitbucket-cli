@@ -3,7 +3,7 @@ package extensions
 import (
 	"io"
 
-	"github.com/cli/bb/v2/internal/ghrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghrepo"
 )
 
 type ExtTemplateType int

@@ -2,11 +2,11 @@ package alias
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	deleteCmd "github.com/cli/bb/v2/pkg/cmd/alias/delete"
-	importCmd "github.com/cli/bb/v2/pkg/cmd/alias/imports"
-	listCmd "github.com/cli/bb/v2/pkg/cmd/alias/list"
-	setCmd "github.com/cli/bb/v2/pkg/cmd/alias/set"
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	deleteCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/alias/delete"
+	importCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/alias/imports"
+	listCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/alias/list"
+	setCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/alias/set"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
 

@@ -1,15 +1,15 @@
 package auth
 
 import (
-	gitCredentialCmd "github.com/cli/bb/v2/pkg/cmd/auth/gitcredential"
-	authLoginCmd "github.com/cli/bb/v2/pkg/cmd/auth/login"
-	authLogoutCmd "github.com/cli/bb/v2/pkg/cmd/auth/logout"
-	authRefreshCmd "github.com/cli/bb/v2/pkg/cmd/auth/refresh"
-	authSetupGitCmd "github.com/cli/bb/v2/pkg/cmd/auth/setupgit"
-	authStatusCmd "github.com/cli/bb/v2/pkg/cmd/auth/status"
-	authSwitchCmd "github.com/cli/bb/v2/pkg/cmd/auth/switch"
-	authTokenCmd "github.com/cli/bb/v2/pkg/cmd/auth/token"
-	"github.com/cli/bb/v2/pkg/cmdutil"
+	gitCredentialCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/gitcredential"
+	authLoginCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/login"
+	authLogoutCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/logout"
+	authRefreshCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/refresh"
+	authSetupGitCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/setupgit"
+	authStatusCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/status"
+	authSwitchCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/switch"
+	authTokenCmd "github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/token"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
 

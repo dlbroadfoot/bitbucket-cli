@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/api"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
 )
 
 type RepositoryList struct {

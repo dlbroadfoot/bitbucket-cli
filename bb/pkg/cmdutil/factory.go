@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cli/bb/v2/context"
-	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/internal/bbrepo"
-	"github.com/cli/bb/v2/internal/browser"
-	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/internal/prompter"
-	"github.com/cli/bb/v2/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/context"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/browser"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/prompter"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 )
 
 type Factory struct {

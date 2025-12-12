@@ -7,7 +7,7 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/cli/bb/v2/internal/run"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/run"
 )
 
 type commandCtx = func(ctx context.Context, name string, args ...string) *exec.Cmd

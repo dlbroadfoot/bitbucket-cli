@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/bb/v2/internal/update"
-	"github.com/cli/bb/v2/pkg/extensions"
-	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/utils"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/update"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/extensions"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/utils"
 	"github.com/spf13/cobra"
 )
 

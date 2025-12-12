@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cli/bb/v2/pkg/cmd/extension"
-	"github.com/cli/bb/v2/pkg/extensions"
-	"github.com/cli/bb/v2/pkg/httpmock"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/extension"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/extensions"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
 	"github.com/stretchr/testify/require"
 )
 

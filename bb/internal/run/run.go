@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cli/bb/v2/utils"
+	"github.com/dlbroadfoot/bitbucket-cli/utils"
 )
 
 // Runnable is typically an exec.Cmd or its stub in tests

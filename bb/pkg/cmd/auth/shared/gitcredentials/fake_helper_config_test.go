@@ -3,9 +3,9 @@ package gitcredentials_test
 import (
 	"testing"
 
-	"github.com/cli/bb/v2/pkg/cmd/auth/shared"
-	"github.com/cli/bb/v2/pkg/cmd/auth/shared/contract"
-	"github.com/cli/bb/v2/pkg/cmd/auth/shared/gitcredentials"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/shared"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/shared/contract"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/shared/gitcredentials"
 )
 
 func TestFakeHelperConfigContract(t *testing.T) {

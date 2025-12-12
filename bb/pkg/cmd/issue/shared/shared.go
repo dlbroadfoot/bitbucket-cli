@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
 )
 
 // Issue represents a Bitbucket issue

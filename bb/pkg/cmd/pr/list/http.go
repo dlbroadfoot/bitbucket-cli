@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/bbrepo"
-	"github.com/cli/bb/v2/pkg/cmd/pr/shared"
+	"github.com/dlbroadfoot/bitbucket-cli/api"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/pr/shared"
 )
 
 func fetchPullRequests(client *http.Client, repo bbrepo.Interface, opts *ListOptions) ([]shared.PullRequest, error) {
