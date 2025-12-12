@@ -56,10 +56,19 @@ if ! command -v productbuild &> /dev/null; then
 fi
 # end of os requirements check
 
-# bb-binary paths
-bin_path="/bb"
-arm64_bin="./dist/macos_darwin_arm64$bin_path"
-amd64_bin="./dist/macos_darwin_amd64_v1$bin_path"
+# bb-binary paths - find directories dynamically (GoReleaser adds version suffixes)
+find_binary() {
+  local pattern="$1"
+  local dir=$(find ./dist -maxdepth 1 -type d -name "${pattern}*" | head -1)
+  if [ -z "$dir" ]; then
+    echo "Error: No directory matching ${pattern}* found in ./dist" >&2
+    exit 1
+  fi
+  echo "${dir}/bb"
+}
+
+arm64_bin=$(find_binary "macos_darwin_arm64")
+amd64_bin=$(find_binary "macos_darwin_amd64")
 # payload paths
 payload_root="pkg_payload"
 payload_local_bin="${payload_root}/usr/local/bin"

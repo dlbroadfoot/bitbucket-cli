@@ -82,7 +82,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: macos-binaries
-          path: ${{ github.workspace }}
+          path: bb/dist
 
       - name: Debug artifact structure
         working-directory: ${{ github.workspace }}
@@ -125,7 +125,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-binaries
-          path: ${{ github.workspace }}
+          path: bb/dist
 
       - name: Debug artifact structure
         shell: bash
@@ -155,18 +155,18 @@ jobs:
           MSI_VERSION="${MSI_VERSION%%-*}"
           echo "MSI Version: $MSI_VERSION"
 
-          # Build for each architecture
+          # Build for each architecture (GoReleaser adds version suffixes like _sse2, _v8.0)
           for arch_dir in dist/windows_windows_*; do
             case "$arch_dir" in
-              *_386 )
+              *windows_386* )
                 platform="x86"
                 arch_suffix="386"
                 ;;
-              *_amd64_v1 )
+              *windows_amd64* )
                 platform="x64"
                 arch_suffix="amd64"
                 ;;
-              *_arm64 )
+              *windows_arm64* )
                 platform="arm64"
                 arch_suffix="arm64"
                 ;;
