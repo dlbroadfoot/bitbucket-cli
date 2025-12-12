@@ -181,7 +181,14 @@ func statusRun(opts *StatusOptions) error {
 	stdout := opts.IO.Out
 	cs := opts.IO.ColorScheme()
 
-	hostnames := authCfg.Hosts()
+	allHostnames := authCfg.Hosts()
+	// Filter to only show Bitbucket hosts (not GitHub hosts from shared config)
+	var hostnames []string
+	for _, h := range allHostnames {
+		if !strings.Contains(h, "github.com") {
+			hostnames = append(hostnames, h)
+		}
+	}
 	if len(hostnames) == 0 {
 		fmt.Fprintf(stderr,
 			"You are not logged into any Bitbucket hosts. To log in, run: %s\n", cs.Bold("bb auth login"))
