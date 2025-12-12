@@ -82,7 +82,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: macos-binaries
-          path: bb/dist/
+          # Download to workspace root to preserve bb/dist/... structure
+
+      - name: Debug artifact structure
+        run: |
+          echo "Workspace structure:"
+          find ../dist -type f 2>/dev/null || echo "No ../dist"
+          find ./dist -type f 2>/dev/null || echo "No ./dist"
+          ls -la dist/ 2>/dev/null || echo "No dist dir"
 
       - name: Build PKG installer
         env:
@@ -114,7 +121,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-binaries
-          path: bb/dist/
+          # Download to workspace root to preserve bb/dist/... structure
+
+      - name: Debug artifact structure
+        shell: bash
+        run: |
+          echo "Workspace structure:"
+          find ./dist -type f 2>/dev/null || echo "No dist dir"
+          ls -la dist/ 2>/dev/null || true
 
       - name: Set up MSBuild
         id: setupmsbuild
@@ -127,6 +141,9 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
         run: |
           MSI_VERSION="${TAG_NAME#v}"
+          # Strip prerelease suffix for WiX (e.g., 2.84.0-rc1 -> 2.84.0)
+          MSI_VERSION="${MSI_VERSION%%-*}"
+          echo "MSI Version: $MSI_VERSION"
 
           # Build for each architecture
           for arch_dir in dist/windows_windows_*; do
