@@ -13,7 +13,6 @@ release:
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
 
 builds:
   - id: macos
@@ -94,18 +93,3 @@ changelog:
       - '^chore:'
       - Merge pull request
       - Merge branch
-
-# Homebrew tap (optional - requires dlbroadfoot/homebrew-tap repo)
-# brews:
-#   - name: bb
-#     repository:
-#       owner: dlbroadfoot
-#       name: homebrew-tap
-#     directory: Formula
-#     homepage: "https://github.com/dlbroadfoot/bitbucket-cli"
-#     description: "Bitbucket CLI - Work seamlessly with Bitbucket from the command line"
-#     license: "MIT"
-#     install: |
-#       bin.install "bb"
-#     test: |
-#       system "#{bin}/bb", "--version"
