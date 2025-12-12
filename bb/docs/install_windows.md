@@ -1,101 +1,34 @@
-# Installing gh on Windows
+# Installing bb on Windows
 
-## Recommended _(Official)_
+## Precompiled binaries
 
-### WinGet
+[Bitbucket CLI releases](https://github.com/dlbroadfoot/bitbucket-cli/releases/latest) contain precompiled `exe` and `msi` binaries for `386`, `amd64` and `arm64` architectures.
 
-[WinGet](https://learn.microsoft.com/en-us/windows/package-manager/winget/) is a command line tool enabling users to discover, install, upgrade, remove and configure applications on Windows 10, Windows 11, and Windows Server 2025 computers. This tool is the client interface to the Windows Package Manager service.
+### Using the MSI installer (Recommended)
 
-The [GitHub CLI package](https://winget.run/pkg/GitHub/cli) is supported by Microsoft with updates powered by [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs/tree/master/manifests/g/GitHub/cli/).
+Download the appropriate MSI installer for your architecture:
+- `bb_X.Y.Z_windows_amd64.msi` for 64-bit Windows
+- `bb_X.Y.Z_windows_386.msi` for 32-bit Windows
+- `bb_X.Y.Z_windows_arm64.msi` for ARM64 Windows
 
-To install:
-
-```pwsh
-winget install --id GitHub.cli
-```
-
-To upgrade:
-
-```pwsh
-winget upgrade --id GitHub.cli
-```
+Double-click the MSI file to install. The installer will:
+- Install `bb.exe` to `C:\Program Files\Bitbucket CLI\`
+- Add the install directory to your system PATH
 
 > [!NOTE]
 > The Windows installer modifies your PATH. When using Windows Terminal, you will need to **open a new window** for the changes to take effect. (Simply opening a new tab will _not_ be sufficient.)
 
-### Precompiled binaries
+### Using the zip archive
 
-[GitHub CLI releases](https://github.com/cli/cli/releases/latest) contain precompiled `exe` and `msi` binaries for `386`, `amd64` and `arm64` architectures.
+1. Download the appropriate zip file for your architecture:
+   - `bb_X.Y.Z_windows_amd64.zip` for 64-bit Windows
+   - `bb_X.Y.Z_windows_386.zip` for 32-bit Windows
+   - `bb_X.Y.Z_windows_arm64.zip` for ARM64 Windows
 
-## Community _(Unofficial)_
+2. Extract the archive
 
-> [!IMPORTANT]
-> The GitHub CLI team does not maintain the following packages or repositories. We are unable to provide support for these installation methods or any guarantees of stability, security, or availability for these installation methods.
+3. Add the extracted directory to your PATH, or move `bb.exe` to a directory already in your PATH
 
-### Chocolatey
+## Building from source
 
-The [GitHub CLI package](https://community.chocolatey.org/packages/gh) is supported by the Chocolatey community with updates powered by [pauby/ChocoPackages](https://github.com/pauby/ChocoPackages/tree/master/automatic/gh).
-
-To install:
-
-```pwsh
-choco install gh
-```
-
-To upgrade:
-
-```pwsh
-choco upgrade gh
-```
-
-### Conda
-
-[Conda](https://docs.conda.io/en/latest/) is an open source package management system and environment management system for installing multiple versions of software packages and their dependencies and switching easily between them. It works on Linux, OS X and Windows, and was created for Python programs but can package and distribute any software.
-
-The [GitHub CLI package](https://anaconda.org/conda-forge/gh) is supported by the Conda community with updates powered by [conda-forge/gh-feedstock](https://github.com/conda-forge/gh-feedstock#installing-gh).
-
-To install:
-
-```shell
-conda install gh --channel conda-forge
-```
-
-To upgrade:
-
-```shell
-conda update gh --channel conda-forge
-```
-
-### Scoop
-
-The [GitHub CLI bucket](https://scoop.sh/#/apps?q=gh) is supported by the Scoop community with updated powered by [ScoopInstaller/Main](https://github.com/ScoopInstaller/Main/blob/master/bucket/gh.json).
-
-To install:
-
-```pwsh
-scoop install gh
-```
-
-To upgrade:
-
-```pwsh
-scoop update gh
-```
-
-### Webi
-
-[Webi](https://webinstall.dev/) is a tool that aims to effortlessly install developer tools with easy-to-remember URLs from official builds quickly, without sudo or Admin, without a package manager, and without changing system file permissions.
-
-The [GitHub CLI package](https://webinstall.dev/gh/) is supported by the Webi community with updates powered by [webinstall/webi-installers](https://github.com/webinstall/webi-installers/tree/main/gh).
-
-To install:
-
-```shell
-curl -sS https://webi.sh/gh \| sh
-```
-
-To upgrade:
-
-```shell
-webi gh@stable
-```
+See [install_source.md](install_source.md) for instructions on building from source.

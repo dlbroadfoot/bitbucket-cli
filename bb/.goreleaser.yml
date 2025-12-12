@@ -7,7 +7,7 @@ project_name: bb
 
 release:
   prerelease: auto
-  draft: false
+  draft: true
   name_template: "Bitbucket CLI {{.Version}}"
 
 before:

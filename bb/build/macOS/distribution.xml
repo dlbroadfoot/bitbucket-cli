@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <installer-gui-script minSpecVersion="2">
-    <title>GitHub CLI</title>
+    <title>Bitbucket CLI</title>
     <license file="LICENSE" mime-type="text/plain"/>
     <options hostArchitectures="arm64,x86_64" customize="never" require-scripts="true" allow-external-scripts="false"/>
     <domains enable_localSystem="true"/>
@@ -11,7 +11,7 @@
         // compared to a disabled install button caused by allowed-os-versions
         if (!(system.compareVersions(system.version.ProductVersion, '12') &gt;= 0)) {
             my.result.title = 'Unable to install';
-            my.result.message = 'GitHub CLI requires macOS 12 or later.';
+            my.result.message = 'Bitbucket CLI requires macOS 12 or later.';
             my.result.type = 'Fatal';
             return false;
         }
@@ -23,11 +23,11 @@
     </allowed-os-versions>
 
     <choices-outline>
-        <line choice="gh-cli"/>
+        <line choice="bb-cli"/>
     </choices-outline>
-    <choice id="gh-cli" title="GitHub CLI (universal)">
-        <pkg-ref id="com.github.cli.pkg"/>
+    <choice id="bb-cli" title="Bitbucket CLI (universal)">
+        <pkg-ref id="com.bitbucket.cli.pkg"/>
     </choice>
 
-    <pkg-ref id="com.github.cli.pkg" auth="root">#com.github.cli.pkg</pkg-ref>
+    <pkg-ref id="com.bitbucket.cli.pkg" auth="root">#com.bitbucket.cli.pkg</pkg-ref>
 </installer-gui-script>
