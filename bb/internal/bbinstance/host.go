@@ -15,6 +15,15 @@ func Default() string {
 	return defaultHostname
 }
 
+// NormalizeHostname normalizes the hostname to lowercase.
+// For Bitbucket, we also strip common prefixes like "api." and "www.".
+func NormalizeHostname(hostname string) string {
+	hostname = strings.ToLower(hostname)
+	hostname = strings.TrimPrefix(hostname, "api.")
+	hostname = strings.TrimPrefix(hostname, "www.")
+	return hostname
+}
+
 // IsCloud returns true if the hostname is Bitbucket Cloud.
 func IsCloud(hostname string) bool {
 	return strings.EqualFold(hostname, defaultHostname)

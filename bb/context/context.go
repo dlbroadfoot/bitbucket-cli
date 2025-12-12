@@ -1,33 +1,26 @@
-// TODO: rename this package to avoid clash with stdlib
+// Package context provides repository resolution from git remotes.
 package context
 
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"sort"
 
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/ghrepo"
+	"github.com/cli/bb/v2/internal/bbrepo"
 	"github.com/cli/bb/v2/pkg/iostreams"
 )
 
-// Cap the number of git remotes to look up, since the user might have an
-// unusually large number of git remotes.
-const defaultRemotesForLookup = 5
-
-func ResolveRemotesToRepos(remotes Remotes, client *api.Client, base string) (*ResolvedRemotes, error) {
+func ResolveRemotesToRepos(remotes Remotes, base string) (*ResolvedRemotes, error) {
 	sort.Stable(remotes)
 
 	result := &ResolvedRemotes{
-		remotes:   remotes,
-		apiClient: client,
+		remotes: remotes,
 	}
 
-	var baseOverride ghrepo.Interface
+	var baseOverride bbrepo.Interface
 	if base != "" {
 		var err error
-		baseOverride, err = ghrepo.FromFullName(base)
+		baseOverride, err = bbrepo.FromFullName(base)
 		if err != nil {
 			return result, err
 		}
@@ -37,28 +30,12 @@ func ResolveRemotesToRepos(remotes Remotes, client *api.Client, base string) (*R
 	return result, nil
 }
 
-func resolveNetwork(result *ResolvedRemotes, remotesForLookup int) error {
-	var repos []ghrepo.Interface
-	for _, r := range result.remotes {
-		repos = append(repos, r)
-		if len(repos) == remotesForLookup {
-			break
-		}
-	}
-
-	networkResult, err := api.RepoNetwork(result.apiClient, repos)
-	result.network = &networkResult
-	return err
-}
-
 type ResolvedRemotes struct {
-	baseOverride ghrepo.Interface
+	baseOverride bbrepo.Interface
 	remotes      Remotes
-	network      *api.RepoNetworkResult
-	apiClient    *api.Client
 }
 
-func (r *ResolvedRemotes) BaseRepo(io *iostreams.IOStreams) (ghrepo.Interface, error) {
+func (r *ResolvedRemotes) BaseRepo(io *iostreams.IOStreams) (bbrepo.Interface, error) {
 	if r.baseOverride != nil {
 		return r.baseOverride, nil
 	}
@@ -72,11 +49,11 @@ func (r *ResolvedRemotes) BaseRepo(io *iostreams.IOStreams) (ghrepo.Interface, e
 		if r.Resolved == "base" {
 			return r, nil
 		} else if r.Resolved != "" {
-			repo, err := ghrepo.FromFullName(r.Resolved)
+			repo, err := bbrepo.FromFullName(r.Resolved)
 			if err != nil {
 				return nil, err
 			}
-			return ghrepo.NewWithHost(repo.RepoOwner(), repo.RepoName(), r.RepoHost()), nil
+			return bbrepo.NewWithHost(repo.RepoWorkspace(), repo.RepoSlug(), r.RepoHost()), nil
 		}
 	}
 
@@ -85,88 +62,35 @@ func (r *ResolvedRemotes) BaseRepo(io *iostreams.IOStreams) (ghrepo.Interface, e
 		return r.remotes[0], nil
 	}
 
-	repos, err := r.NetworkRepos(defaultRemotesForLookup)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(repos) == 0 {
+	// For Bitbucket, we don't have a repo network query, so just use the first remote
+	// or prompt if multiple
+	if len(r.remotes) == 1 {
 		return r.remotes[0], nil
-	} else if len(repos) == 1 {
-		return repos[0], nil
 	}
 
 	cs := io.ColorScheme()
 
 	fmt.Fprintf(io.ErrOut,
-		"%s No default remote repository has been set. To learn more about the default repository, run: gh repo set-default --help\n",
+		"%s No default remote repository has been set. To learn more about the default repository, run: bb repo set-default --help\n",
 		cs.FailureIcon())
 
 	fmt.Fprintln(io.Out)
 
 	return nil, errors.New(
-		"please run `gh repo set-default` to select a default remote repository.")
-}
-
-func (r *ResolvedRemotes) HeadRepos() ([]*api.Repository, error) {
-	if r.network == nil {
-		err := resolveNetwork(r, defaultRemotesForLookup)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var results []*api.Repository
-	var ids []string // Check if repo duplicates
-	for _, repo := range r.network.Repositories {
-		if repo != nil && repo.ViewerCanPush() && !slices.Contains(ids, repo.ID) {
-			results = append(results, repo)
-			ids = append(ids, repo.ID)
-		}
-	}
-	return results, nil
-}
-
-// NetworkRepos fetches info about remotes for the network of repos.
-// Pass a value of 0 to fetch info on all remotes.
-func (r *ResolvedRemotes) NetworkRepos(remotesForLookup int) ([]*api.Repository, error) {
-	if r.network == nil {
-		err := resolveNetwork(r, remotesForLookup)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var repos []*api.Repository
-	repoMap := map[string]bool{}
-
-	add := func(r *api.Repository) {
-		fn := ghrepo.FullName(r)
-		if _, ok := repoMap[fn]; !ok {
-			repoMap[fn] = true
-			repos = append(repos, r)
-		}
-	}
-
-	for _, repo := range r.network.Repositories {
-		if repo == nil {
-			continue
-		}
-		if repo.Parent != nil {
-			add(repo.Parent)
-		}
-		add(repo)
-	}
-
-	return repos, nil
+		"please run `bb repo set-default` to select a default remote repository.")
 }
 
 // RemoteForRepo finds the git remote that points to a repository
-func (r *ResolvedRemotes) RemoteForRepo(repo ghrepo.Interface) (*Remote, error) {
+func (r *ResolvedRemotes) RemoteForRepo(repo bbrepo.Interface) (*Remote, error) {
 	for _, remote := range r.remotes {
-		if ghrepo.IsSame(remote, repo) {
+		if bbrepo.IsSame(remote, repo) {
 			return remote, nil
 		}
 	}
 	return nil, errors.New("not found")
+}
+
+// Remotes returns the list of remotes
+func (r *ResolvedRemotes) Remotes() Remotes {
+	return r.remotes
 }

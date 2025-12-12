@@ -10,9 +10,9 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/bb/v2/api"
+	"github.com/cli/bb/v2/internal/bbrepo"
 	"github.com/cli/bb/v2/internal/browser"
 	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/internal/ghrepo"
 	"github.com/cli/bb/v2/internal/text"
 	"github.com/cli/bb/v2/pkg/cmdutil"
 	"github.com/cli/bb/v2/pkg/iostreams"
@@ -23,7 +23,7 @@ import (
 type ViewOptions struct {
 	HttpClient func() (*http.Client, error)
 	IO         *iostreams.IOStreams
-	BaseRepo   func() (ghrepo.Interface, error)
+	BaseRepo   func() (bbrepo.Interface, error)
 	Browser    browser.Browser
 	Exporter   cmdutil.Exporter
 	Config     func() (gh.Config, error)
@@ -46,7 +46,7 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 		Use:   "view [<repository>]",
 		Short: "View a repository",
 		Long: heredoc.Docf(`
-			Display the description and the README of a GitHub repository.
+			Display the description and the README of a Bitbucket repository.
 
 			With no argument, the repository for the current directory is displayed.
 
@@ -68,14 +68,11 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 
 	cmd.Flags().BoolVarP(&opts.Web, "web", "w", false, "Open a repository in the browser")
 	cmd.Flags().StringVarP(&opts.Branch, "branch", "b", "", "View a specific branch of the repository")
-	cmdutil.AddJSONFlags(cmd, &opts.Exporter, api.RepositoryFields)
 
 	_ = cmdutil.RegisterBranchCompletionFlags(f.GitClient, cmd, "branch")
 
 	return cmd
 }
-
-var defaultFields = []string{"name", "owner", "description"}
 
 func viewRun(opts *ViewOptions) error {
 	httpClient, err := opts.HttpClient()
@@ -83,7 +80,7 @@ func viewRun(opts *ViewOptions) error {
 		return err
 	}
 
-	var toView ghrepo.Interface
+	var toView bbrepo.Interface
 	apiClient := api.NewClientFromHTTP(httpClient)
 	if opts.RepoArg == "" {
 		var err error
@@ -105,23 +102,21 @@ func viewRun(opts *ViewOptions) error {
 			}
 			viewURL = currentUser + "/" + viewURL
 		}
-		toView, err = ghrepo.FromFullName(viewURL)
+		toView, err = bbrepo.FromFullName(viewURL)
 		if err != nil {
 			return fmt.Errorf("argument error: %w", err)
 		}
 	}
 
-	var readme *RepoReadme
-	fields := defaultFields
-	if opts.Exporter != nil {
-		fields = opts.Exporter.Fields()
-	}
-
-	repo, err := api.FetchRepository(apiClient, toView, fields)
+	// Fetch repository info from Bitbucket API
+	var repo api.Repository
+	repoPath := fmt.Sprintf("repositories/%s/%s", toView.RepoWorkspace(), toView.RepoSlug())
+	err = apiClient.Get(toView.RepoHost(), repoPath, &repo)
 	if err != nil {
 		return err
 	}
 
+	var readme *RepoReadme
 	if !opts.Web && opts.Exporter == nil {
 		readme, err = RepositoryReadme(httpClient, toView, opts.Branch)
 		if err != nil && !errors.Is(err, NotFoundError) {
@@ -148,7 +143,7 @@ func viewRun(opts *ViewOptions) error {
 		return opts.Exporter.Write(opts.IO, repo)
 	}
 
-	fullName := ghrepo.FullName(toView)
+	fullName := bbrepo.FullName(toView)
 	stdout := opts.IO.Out
 
 	if !opts.IO.IsStdoutTTY() {
@@ -209,25 +204,23 @@ func viewRun(opts *ViewOptions) error {
 		FullName:    cs.Bold(fullName),
 		Description: description,
 		Readme:      readmeContent,
-		View:        cs.Mutedf("View this repository on GitHub: %s", openURL),
+		View:        cs.Mutedf("View this repository on Bitbucket: %s", openURL),
 	}
 
 	return tmpl.Execute(stdout, repoData)
 }
 
 func isMarkdownFile(filename string) bool {
-	// kind of gross, but i'm assuming that 90% of the time the suffix will just be .md. it didn't
-	// seem worth executing a regex for this given that assumption.
 	return strings.HasSuffix(filename, ".md") ||
 		strings.HasSuffix(filename, ".markdown") ||
 		strings.HasSuffix(filename, ".mdown") ||
 		strings.HasSuffix(filename, ".mkdown")
 }
 
-func generateBranchURL(r ghrepo.Interface, branch string) string {
+func generateBranchURL(r bbrepo.Interface, branch string) string {
 	if branch == "" {
-		return ghrepo.GenerateRepoURL(r, "")
+		return bbrepo.GenerateRepoURL(r, "")
 	}
 
-	return ghrepo.GenerateRepoURL(r, "tree/%s", url.QueryEscape(branch))
+	return bbrepo.GenerateRepoURL(r, "src/%s", url.QueryEscape(branch))
 }

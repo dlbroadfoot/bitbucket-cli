@@ -8,11 +8,10 @@ import (
 
 	"github.com/cli/bb/v2/context"
 	"github.com/cli/bb/v2/git"
+	"github.com/cli/bb/v2/internal/bbrepo"
 	"github.com/cli/bb/v2/internal/browser"
 	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/internal/ghrepo"
 	"github.com/cli/bb/v2/internal/prompter"
-	"github.com/cli/bb/v2/pkg/extensions"
 	"github.com/cli/bb/v2/pkg/iostreams"
 )
 
@@ -20,15 +19,14 @@ type Factory struct {
 	AppVersion     string
 	ExecutableName string
 
-	Browser          browser.Browser
-	ExtensionManager extensions.ExtensionManager
-	GitClient        *git.Client
-	IOStreams        *iostreams.IOStreams
-	Prompter         prompter.Prompter
+	Browser   browser.Browser
+	GitClient *git.Client
+	IOStreams *iostreams.IOStreams
+	Prompter  prompter.Prompter
 
-	BaseRepo   func() (ghrepo.Interface, error)
-	Branch     func() (string, error)
-	Config     func() (gh.Config, error)
+	BaseRepo func() (bbrepo.Interface, error)
+	Branch   func() (string, error)
+	Config   func() (gh.Config, error)
 	HttpClient func() (*http.Client, error)
 	// PlainHttpClient is a special HTTP client that does not automatically set
 	// auth and other headers. This is meant to be used in situations where the
@@ -39,9 +37,9 @@ type Factory struct {
 
 // Executable is the path to the currently invoked binary
 func (f *Factory) Executable() string {
-	ghPath := os.Getenv("GH_PATH")
-	if ghPath != "" {
-		return ghPath
+	bbPath := os.Getenv("BB_PATH")
+	if bbPath != "" {
+		return bbPath
 	}
 	if !strings.ContainsRune(f.ExecutableName, os.PathSeparator) {
 		f.ExecutableName = executable(f.ExecutableName)
@@ -54,17 +52,17 @@ func (f *Factory) Executable() string {
 // PATH, return the absolute location to the program.
 //
 // The idea is that the result of this function is callable in the future and refers to the same
-// installation of gh, even across upgrades. This is needed primarily for Homebrew, which installs software
-// under a location such as `/usr/local/Cellar/gh/1.13.1/bin/gh` and symlinks it from `/usr/local/bin/gh`.
+// installation of bb, even across upgrades. This is needed primarily for Homebrew, which installs software
+// under a location such as `/usr/local/Cellar/bb/1.0.0/bin/bb` and symlinks it from `/usr/local/bin/bb`.
 // When the version is upgraded, Homebrew will often delete older versions, but keep the symlink. Because of
-// this, we want to refer to the `gh` binary as `/usr/local/bin/gh` and not as its internal Homebrew
+// this, we want to refer to the `bb` binary as `/usr/local/bin/bb` and not as its internal Homebrew
 // location.
 //
-// None of this would be needed if we could just refer to GitHub CLI as `gh`, i.e. without using an absolute
+// None of this would be needed if we could just refer to Bitbucket CLI as `bb`, i.e. without using an absolute
 // path. However, for some reason Homebrew does not include `/usr/local/bin` in PATH when it invokes git
-// commands to update its taps. If `gh` (no path) is being used as git credential helper, as set up by `gh
+// commands to update its taps. If `bb` (no path) is being used as git credential helper, as set up by `bb
 // auth login`, running `brew update` will print out authentication errors as git is unable to locate
-// Homebrew-installed `gh`.
+// Homebrew-installed `bb`.
 func executable(fallbackName string) string {
 	exe, err := os.Executable()
 	if err != nil {

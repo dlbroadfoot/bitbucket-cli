@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cli/bb/v2/internal/ghrepo"
+	"github.com/cli/bb/v2/internal/bbrepo"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func executeParentHooks(cmd *cobra.Command, args []string) error {
 }
 
 func EnableRepoOverride(cmd *cobra.Command, f *Factory) {
-	cmd.PersistentFlags().StringP("repo", "R", "", "Select another repository using the `[HOST/]OWNER/REPO` format")
+	cmd.PersistentFlags().StringP("repo", "R", "", "Select another repository using the `[HOST/]WORKSPACE/REPO` format")
 	_ = cmd.RegisterFlagCompletionFunc("repo", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		remotes, err := f.Remotes()
 		if err != nil {
@@ -35,7 +35,7 @@ func EnableRepoOverride(cmd *cobra.Command, f *Factory) {
 
 		var results []string
 		for _, remote := range remotes {
-			repo := remote.RepoOwner() + "/" + remote.RepoName()
+			repo := remote.RepoWorkspace() + "/" + remote.RepoSlug()
 			if !strings.EqualFold(remote.RepoHost(), defaultHost) {
 				repo = remote.RepoHost() + "/" + repo
 			}
@@ -57,13 +57,13 @@ func EnableRepoOverride(cmd *cobra.Command, f *Factory) {
 	}
 }
 
-func OverrideBaseRepoFunc(f *Factory, override string) func() (ghrepo.Interface, error) {
+func OverrideBaseRepoFunc(f *Factory, override string) func() (bbrepo.Interface, error) {
 	if override == "" {
-		override = os.Getenv("GH_REPO")
+		override = os.Getenv("BB_REPO")
 	}
 	if override != "" {
-		return func() (ghrepo.Interface, error) {
-			return ghrepo.FromFullName(override)
+		return func() (bbrepo.Interface, error) {
+			return bbrepo.FromFullName(override)
 		}
 	}
 	return f.BaseRepo

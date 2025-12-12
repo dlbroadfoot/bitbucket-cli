@@ -1,142 +1,150 @@
+// Package authflow provides authentication flows for Bitbucket.
+// Bitbucket uses App Passwords (similar to GitHub PATs) for authentication.
+// OAuth device flow is not supported - we use simple username:app_password authentication.
 package authflow
 
 import (
 	"bufio"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
+	"strings"
 
-	"github.com/atotto/clipboard"
-	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/browser"
-	"github.com/cli/bb/v2/internal/ghinstance"
+	"github.com/cli/bb/v2/internal/bbinstance"
 	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/oauth"
-
-	ghauth "github.com/cli/go-gh/v2/pkg/auth"
 )
 
-var (
-	// The "GitHub CLI" OAuth app
-	oauthClientID = "178c6fc778ccc68e1d6a"
-	// This value is safe to be embedded in version control
-	oauthClientSecret = "34ddeff2b558a23d38fba8a6de74f086ede1cc0b"
-)
+// AuthFlowResult contains the result of an authentication flow.
+type AuthFlowResult struct {
+	Username string
+	Token    string // This is "username:app_password" for Bitbucket
+}
 
-// AuthFlow initiates an OAuth device or web application flow to acquire a
-// token. The provided HTTP client should be a plain client that does not set
-// auth or other headers.
-func AuthFlow(httpClient *http.Client, oauthHost string, IO *iostreams.IOStreams, notice string, additionalScopes []string, isInteractive bool, b browser.Browser, isCopyToClipboard bool) (string, string, error) {
+// AppPasswordAuth performs authentication using a Bitbucket App Password.
+// This is the primary authentication method for Bitbucket (no OAuth device flow).
+func AppPasswordAuth(hostname string, IO *iostreams.IOStreams, prompter Prompter) (*AuthFlowResult, error) {
 	w := IO.ErrOut
 	cs := IO.ColorScheme()
 
-	minimumScopes := []string{"repo", "read:org", "gist"}
-	scopes := append(minimumScopes, additionalScopes...)
+	// Show guidance for creating an App Password
+	fmt.Fprint(w, fmt.Sprintf(`
+Tip: you can generate an App Password here https://%s/account/settings/app-passwords/
+Required permissions: Account (Read), Repositories (Read, Write), Pull Requests (Read, Write)
 
-	host, err := oauth.NewGitHubHost(ghinstance.HostPrefix(oauthHost))
+`, hostname))
+
+	// Prompt for username
+	username, err := prompter.Input("Bitbucket username:", "")
 	if err != nil {
-		return "", "", err
+		return nil, err
+	}
+	if username == "" {
+		return nil, fmt.Errorf("username is required")
 	}
 
-	flow := &oauth.Flow{
-		Host:         host,
-		ClientID:     oauthClientID,
-		ClientSecret: oauthClientSecret,
-		CallbackURI:  getCallbackURI(oauthHost),
-		Scopes:       scopes,
-		DisplayCode: func(code, verificationURL string) error {
-			if isCopyToClipboard {
-				err := clipboard.WriteAll(code)
-				if err == nil {
-					fmt.Fprintf(w, "%s One-time code (%s) copied to clipboard\n", cs.Yellow("!"), cs.Bold(code))
-					return nil
-				}
-				fmt.Fprintf(w, "%s Failed to copy one-time code to clipboard\n", cs.Red("!"))
-				fmt.Fprintf(w, "  %s\n", err)
-			}
-			fmt.Fprintf(w, "%s First copy your one-time code: %s\n", cs.Yellow("!"), cs.Bold(code))
-			return nil
-		},
-		BrowseURL: func(authURL string) error {
-			if u, err := url.Parse(authURL); err == nil {
-				if u.Scheme != "http" && u.Scheme != "https" {
-					return fmt.Errorf("invalid URL: %s", authURL)
-				}
-			} else {
-				return err
-			}
-
-			if !isInteractive {
-				fmt.Fprintf(w, "%s to continue in your web browser: %s\n", cs.Bold("Open this URL"), authURL)
-				return nil
-			}
-
-			fmt.Fprintf(w, "%s to open %s in your browser... ", cs.Bold("Press Enter"), authURL)
-			_ = waitForEnter(IO.In)
-
-			if err := b.Browse(authURL); err != nil {
-				fmt.Fprintf(w, "%s Failed opening a web browser at %s\n", cs.Red("!"), authURL)
-				fmt.Fprintf(w, "  %s\n", err)
-				fmt.Fprint(w, "  Please try entering the URL in your browser manually\n")
-			}
-			return nil
-		},
-		WriteSuccessHTML: func(w io.Writer) {
-			fmt.Fprint(w, oauthSuccessPage)
-		},
-		HTTPClient: httpClient,
-		Stdin:      IO.In,
-		Stdout:     w,
-	}
-
-	fmt.Fprintln(w, notice)
-
-	token, err := flow.DetectFlow()
+	// Prompt for app password
+	appPassword, err := prompter.Password("App password:")
 	if err != nil {
-		return "", "", err
+		return nil, err
+	}
+	if appPassword == "" {
+		return nil, fmt.Errorf("app password is required")
 	}
 
-	userLogin, err := getViewer(oauthHost, token.Token, IO.ErrOut)
+	// Verify credentials
+	if err := verifyCredentials(hostname, username, appPassword); err != nil {
+		return nil, fmt.Errorf("authentication failed: %w", err)
+	}
+
+	fmt.Fprintf(w, "%s Authentication complete.\n", cs.SuccessIcon())
+
+	// Return the combined token (username:app_password format)
+	token := fmt.Sprintf("%s:%s", username, appPassword)
+
+	return &AuthFlowResult{
+		Username: username,
+		Token:    token,
+	}, nil
+}
+
+// verifyCredentials checks if the username and app password are valid.
+func verifyCredentials(hostname, username, appPassword string) error {
+	apiURL := bbinstance.RESTPrefix(hostname) + "user"
+
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
-	return token.Token, userLogin, nil
-}
+	// Set Basic Auth header
+	auth := base64.StdEncoding.EncodeToString([]byte(username + ":" + appPassword))
+	req.Header.Set("Authorization", "Basic "+auth)
+	req.Header.Set("Accept", "application/json")
 
-func getCallbackURI(oauthHost string) string {
-	callbackURI := "http://127.0.0.1/callback"
-	if ghauth.IsEnterprise(oauthHost) {
-		// the OAuth app on Enterprise hosts is still registered with a legacy callback URL
-		// see https://github.com/cli/cli/pull/222, https://github.com/cli/cli/pull/650
-		callbackURI = "http://localhost/"
-	}
-	return callbackURI
-}
-
-type cfg struct {
-	token string
-}
-
-func (c cfg) ActiveToken(hostname string) (string, string) {
-	return c.token, "oauth_token"
-}
-
-func getViewer(hostname, token string, logWriter io.Writer) (string, error) {
-	opts := api.HTTPClientOptions{
-		Config: cfg{token: token},
-		Log:    logWriter,
-	}
-	client, err := api.NewHTTPClient(opts)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return api.CurrentLoginName(api.NewClientFromHTTP(client), hostname)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	// Verify the username matches
+	var user struct {
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if !strings.EqualFold(user.Username, username) {
+		return fmt.Errorf("username mismatch: expected %s, got %s", username, user.Username)
+	}
+
+	return nil
 }
 
+// GetCurrentLogin extracts the username from a Bitbucket token.
+// Bitbucket tokens are stored as "username:app_password".
+func GetCurrentLogin(token string) (string, error) {
+	if idx := strings.Index(token, ":"); idx > 0 {
+		return token[:idx], nil
+	}
+	return "", fmt.Errorf("invalid token format")
+}
+
+// Prompter interface for authentication prompts.
+type Prompter interface {
+	Input(prompt, defaultValue string) (string, error)
+	Password(prompt string) (string, error)
+	Select(prompt, defaultValue string, options []string) (int, error)
+}
+
+// waitForEnter waits for the user to press Enter.
 func waitForEnter(r io.Reader) error {
 	scanner := bufio.NewScanner(r)
 	scanner.Scan()
 	return scanner.Err()
 }
+
+var oauthSuccessPage = `
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bitbucket CLI - Authentication Complete</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
+h1 { color: #0052CC; }
+</style>
+</head>
+<body>
+<h1>Authentication Complete</h1>
+<p>You have been authenticated. You may close this window.</p>
+</body>
+</html>
+`

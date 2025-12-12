@@ -1,14 +1,14 @@
 package list
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
-	"github.com/shurcooL/githubv4"
-
 	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/pkg/search"
+	"github.com/cli/bb/v2/internal/bbinstance"
 )
 
 type RepositoryList struct {
@@ -19,7 +19,7 @@ type RepositoryList struct {
 }
 
 type FilterOptions struct {
-	Visibility  string // private, public, internal
+	Visibility  string // private, public
 	Fork        bool
 	Source      bool
 	Language    string
@@ -29,189 +29,174 @@ type FilterOptions struct {
 	Fields      []string
 }
 
-func listRepos(client *http.Client, hostname string, limit int, owner string, filter FilterOptions) (*RepositoryList, error) {
-	if filter.Language != "" || filter.Archived || filter.NonArchived || len(filter.Topic) > 0 || filter.Visibility == "internal" {
-		return searchRepos(client, hostname, limit, owner, filter)
+// listRepos lists repositories for a workspace using Bitbucket REST API.
+// Bitbucket API: GET /2.0/repositories/{workspace}
+func listRepos(client *http.Client, hostname string, limit int, workspace string, filter FilterOptions) (*RepositoryList, error) {
+	if workspace == "" {
+		// List repositories for the authenticated user
+		return listUserRepos(client, hostname, limit, filter)
 	}
 
-	perPage := limit
-	if perPage > 100 {
-		perPage = 100
+	return listWorkspaceRepos(client, hostname, limit, workspace, filter)
+}
+
+// listUserRepos lists repositories the authenticated user has access to.
+// Bitbucket API: GET /2.0/user/permissions/repositories
+func listUserRepos(client *http.Client, hostname string, limit int, filter FilterOptions) (*RepositoryList, error) {
+	apiURL := bbinstance.RESTPrefix(hostname) + "user/permissions/repositories"
+
+	params := url.Values{}
+	params.Set("pagelen", fmt.Sprintf("%d", min(limit, 100)))
+
+	// Build query filter
+	var queryParts []string
+	if filter.Visibility == "private" {
+		queryParts = append(queryParts, "repository.is_private=true")
+	} else if filter.Visibility == "public" {
+		queryParts = append(queryParts, "repository.is_private=false")
+	}
+	if len(queryParts) > 0 {
+		params.Set("q", strings.Join(queryParts, " AND "))
 	}
 
-	variables := map[string]interface{}{
-		"perPage": githubv4.Int(perPage),
-	}
+	fullURL := apiURL + "?" + params.Encode()
 
-	if filter.Visibility != "" {
-		variables["privacy"] = githubv4.RepositoryPrivacy(strings.ToUpper(filter.Visibility))
-	}
-
-	if filter.Fork {
-		variables["fork"] = githubv4.Boolean(true)
-	} else if filter.Source {
-		variables["fork"] = githubv4.Boolean(false)
-	}
-
-	inputs := []string{"$perPage:Int!", "$endCursor:String", "$privacy:RepositoryPrivacy", "$fork:Boolean"}
-	var ownerConnection string
-	if owner == "" {
-		ownerConnection = "repositoryOwner: viewer"
-	} else {
-		ownerConnection = "repositoryOwner(login: $owner)"
-		variables["owner"] = githubv4.String(owner)
-		inputs = append(inputs, "$owner:String!")
-	}
-
-	type result struct {
-		RepositoryOwner struct {
-			Login        string
-			Repositories struct {
-				Nodes      []api.Repository
-				TotalCount int
-				PageInfo   struct {
-					HasNextPage bool
-					EndCursor   string
-				}
-			}
-		}
-	}
-
-	query := fmt.Sprintf(`query RepositoryList(%s) {
-		%s {
-			login
-			repositories(first: $perPage, after: $endCursor, privacy: $privacy, isFork: $fork, ownerAffiliations: OWNER, orderBy: { field: PUSHED_AT, direction: DESC }) {
-				nodes{%s}
-				totalCount
-				pageInfo{hasNextPage,endCursor}
-			}
-		}
-	}`, strings.Join(inputs, ","), ownerConnection, api.RepositoryGraphQL(filter.Fields))
-
-	apiClient := api.NewClientFromHTTP(client)
-	listResult := RepositoryList{}
-pagination:
-	for {
-		var res result
-		err := apiClient.GraphQL(hostname, query, variables, &res)
+	result := &RepositoryList{}
+	for fullURL != "" && len(result.Repositories) < limit {
+		req, err := http.NewRequest("GET", fullURL, nil)
 		if err != nil {
 			return nil, err
 		}
+		req.Header.Set("Accept", "application/json")
 
-		owner := res.RepositoryOwner
-		listResult.TotalCount = owner.Repositories.TotalCount
-		listResult.Owner = owner.Login
-
-		for _, repo := range owner.Repositories.Nodes {
-			listResult.Repositories = append(listResult.Repositories, repo)
-			if len(listResult.Repositories) >= limit {
-				break pagination
-			}
-		}
-
-		if !owner.Repositories.PageInfo.HasNextPage {
-			break
-		}
-		variables["endCursor"] = githubv4.String(owner.Repositories.PageInfo.EndCursor)
-	}
-
-	return &listResult, nil
-}
-
-func searchRepos(client *http.Client, hostname string, limit int, owner string, filter FilterOptions) (*RepositoryList, error) {
-	type result struct {
-		Search struct {
-			RepositoryCount int
-			Nodes           []api.Repository
-			PageInfo        struct {
-				HasNextPage bool
-				EndCursor   string
-			}
-		}
-	}
-
-	query := fmt.Sprintf(`query RepositoryListSearch($query:String!,$perPage:Int!,$endCursor:String) {
-		search(type: REPOSITORY, query: $query, first: $perPage, after: $endCursor) {
-			repositoryCount
-			nodes{...on Repository{%s}}
-			pageInfo{hasNextPage,endCursor}
-		}
-	}`, api.RepositoryGraphQL(filter.Fields))
-
-	perPage := limit
-	if perPage > 100 {
-		perPage = 100
-	}
-
-	variables := map[string]interface{}{
-		"query":   githubv4.String(searchQuery(owner, filter)),
-		"perPage": githubv4.Int(perPage),
-	}
-
-	apiClient := api.NewClientFromHTTP(client)
-	listResult := RepositoryList{FromSearch: true}
-pagination:
-	for {
-		var result result
-		err := apiClient.GraphQL(hostname, query, variables, &result)
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}
+		defer resp.Body.Close()
 
-		listResult.TotalCount = result.Search.RepositoryCount
-		for _, repo := range result.Search.Nodes {
-			if listResult.Owner == "" && repo.NameWithOwner != "" {
-				idx := strings.IndexRune(repo.NameWithOwner, '/')
-				listResult.Owner = repo.NameWithOwner[:idx]
+		if resp.StatusCode != http.StatusOK {
+			return nil, api.HandleHTTPError(resp)
+		}
+
+		var pageResp struct {
+			Size   int    `json:"size"`
+			Page   int    `json:"page"`
+			Next   string `json:"next"`
+			Values []struct {
+				Repository api.Repository `json:"repository"`
+			} `json:"values"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&pageResp); err != nil {
+			return nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		for _, v := range pageResp.Values {
+			repo := v.Repository
+			// Apply client-side filters
+			if filter.Fork && repo.Parent == nil {
+				continue
 			}
-			listResult.Repositories = append(listResult.Repositories, repo)
-			if len(listResult.Repositories) >= limit {
-				break pagination
+			if filter.Source && repo.Parent != nil {
+				continue
+			}
+			if filter.Language != "" && !strings.EqualFold(repo.Language, filter.Language) {
+				continue
+			}
+
+			result.Repositories = append(result.Repositories, repo)
+			if result.Owner == "" && repo.Workspace.Slug != "" {
+				result.Owner = repo.Workspace.Slug
+			}
+			if len(result.Repositories) >= limit {
+				break
 			}
 		}
 
-		if !result.Search.PageInfo.HasNextPage {
-			break
-		}
-		variables["endCursor"] = githubv4.String(result.Search.PageInfo.EndCursor)
+		result.TotalCount = pageResp.Size
+		fullURL = pageResp.Next
 	}
 
-	return &listResult, nil
+	return result, nil
 }
 
-func searchQuery(owner string, filter FilterOptions) string {
-	if owner == "" {
-		owner = "@me"
+// listWorkspaceRepos lists repositories in a specific workspace.
+// Bitbucket API: GET /2.0/repositories/{workspace}
+func listWorkspaceRepos(client *http.Client, hostname string, limit int, workspace string, filter FilterOptions) (*RepositoryList, error) {
+	apiURL := bbinstance.RESTPrefix(hostname) + "repositories/" + workspace
+
+	params := url.Values{}
+	params.Set("pagelen", fmt.Sprintf("%d", min(limit, 100)))
+
+	// Build query filter
+	var queryParts []string
+	if filter.Visibility == "private" {
+		queryParts = append(queryParts, "is_private=true")
+	} else if filter.Visibility == "public" {
+		queryParts = append(queryParts, "is_private=false")
+	}
+	if filter.Language != "" {
+		queryParts = append(queryParts, fmt.Sprintf("language=%q", filter.Language))
+	}
+	if len(queryParts) > 0 {
+		params.Set("q", strings.Join(queryParts, " AND "))
 	}
 
-	fork := "true"
-	if filter.Fork {
-		fork = "only"
-	} else if filter.Source {
-		fork = "false"
+	fullURL := apiURL + "?" + params.Encode()
+
+	result := &RepositoryList{Owner: workspace}
+	for fullURL != "" && len(result.Repositories) < limit {
+		req, err := http.NewRequest("GET", fullURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, api.HandleHTTPError(resp)
+		}
+
+		var pageResp api.PaginatedResponse[api.Repository]
+		if err := json.NewDecoder(resp.Body).Decode(&pageResp); err != nil {
+			return nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		for _, repo := range pageResp.Values {
+			// Apply client-side filters
+			if filter.Fork && repo.Parent == nil {
+				continue
+			}
+			if filter.Source && repo.Parent != nil {
+				continue
+			}
+
+			result.Repositories = append(result.Repositories, repo)
+			if len(result.Repositories) >= limit {
+				break
+			}
+		}
+
+		result.TotalCount = pageResp.Size
+		fullURL = pageResp.Next
 	}
 
-	var archived *bool
-	if filter.Archived {
-		trueBool := true
-		archived = &trueBool
-	}
-	if filter.NonArchived {
-		falseBool := false
-		archived = &falseBool
-	}
+	return result, nil
+}
 
-	q := search.Query{
-		Keywords: []string{"sort:updated-desc"},
-		Qualifiers: search.Qualifiers{
-			Archived: archived,
-			Fork:     fork,
-			Is:       []string{filter.Visibility},
-			Language: filter.Language,
-			Topic:    filter.Topic,
-			User:     []string{owner},
-		},
+// searchRepos searches for repositories (simplified - Bitbucket search is limited)
+func searchRepos(client *http.Client, hostname string, limit int, workspace string, filter FilterOptions) (*RepositoryList, error) {
+	// Bitbucket doesn't have the same search capabilities as GitHub
+	// Fall back to listing with filters
+	result, err := listRepos(client, hostname, limit, workspace, filter)
+	if err != nil {
+		return nil, err
 	}
-
-	return q.StandardSearchString()
+	result.FromSearch = true
+	return result, nil
 }

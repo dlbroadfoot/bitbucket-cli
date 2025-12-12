@@ -7,14 +7,14 @@ import (
 
 	"github.com/cli/bb/v2/context"
 	"github.com/cli/bb/v2/git"
+	"github.com/cli/bb/v2/internal/bbinstance"
 	"github.com/cli/bb/v2/internal/gh"
-	"github.com/cli/bb/v2/internal/ghinstance"
 	"github.com/cli/bb/v2/pkg/set"
 	"github.com/cli/go-gh/v2/pkg/ssh"
 )
 
 const (
-	GH_HOST = "GH_HOST"
+	BB_HOST = "BB_HOST"
 )
 
 type remoteResolver struct {
@@ -61,7 +61,7 @@ func (rr *remoteResolver) Resolver() func() (context.Remotes, error) {
 		// Use set to dedupe list of hosts
 		hostsSet := set.NewStringSet()
 		hostsSet.AddValues(authedHosts)
-		hostsSet.AddValues([]string{defaultHost, ghinstance.Default()})
+		hostsSet.AddValues([]string{defaultHost, bbinstance.Default()})
 		hosts := hostsSet.ToSlice()
 
 		// Sort remotes
@@ -84,10 +84,10 @@ func (rr *remoteResolver) Resolver() func() (context.Remotes, error) {
 				rr.remotesError = fmt.Errorf("none of the git remotes configured for this repository correspond to the %s environment variable. Try adding a matching remote or unsetting the variable", src)
 				return nil, rr.remotesError
 			} else if cfg.Authentication().HasEnvToken() {
-				rr.remotesError = errors.New("set the GH_HOST environment variable to specify which GitHub host to use")
+				rr.remotesError = errors.New("set the BB_HOST environment variable to specify which Bitbucket host to use")
 				return nil, rr.remotesError
 			}
-			rr.remotesError = errors.New("none of the git remotes configured for this repository point to a known GitHub host. To tell gh about a new GitHub host, please use `gh auth login`")
+			rr.remotesError = errors.New("none of the git remotes configured for this repository point to a known Bitbucket host. To tell bb about a new Bitbucket host, please use `bb auth login`")
 			return nil, rr.remotesError
 		}
 
@@ -96,5 +96,5 @@ func (rr *remoteResolver) Resolver() func() (context.Remotes, error) {
 }
 
 func isHostEnv(src string) bool {
-	return src == GH_HOST
+	return src == BB_HOST
 }

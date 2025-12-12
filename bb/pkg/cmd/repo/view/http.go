@@ -2,14 +2,14 @@ package view
 
 import (
 	"bytes"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/ghrepo"
+	"github.com/cli/bb/v2/internal/bbrepo"
 	"github.com/cli/go-gh/v2/pkg/asciisanitizer"
 	"golang.org/x/text/transform"
 )
@@ -22,44 +22,79 @@ type RepoReadme struct {
 	BaseURL  string
 }
 
-func RepositoryReadme(client *http.Client, repo ghrepo.Interface, branch string) (*RepoReadme, error) {
+// RepositoryReadme fetches the README for a Bitbucket repository.
+// Bitbucket API: GET /2.0/repositories/{workspace}/{repo_slug}/src/{commit}/README.md
+func RepositoryReadme(client *http.Client, repo bbrepo.Interface, branch string) (*RepoReadme, error) {
 	apiClient := api.NewClientFromHTTP(client)
-	var response struct {
-		Name    string
-		Content string
-		HTMLURL string `json:"html_url"`
+
+	// First, try to get the README from the repository source
+	// Bitbucket doesn't have a dedicated README endpoint, so we need to fetch from src
+	ref := branch
+	if ref == "" {
+		ref = "HEAD"
 	}
 
-	err := apiClient.REST(repo.RepoHost(), "GET", getReadmePath(repo, branch), nil, &response)
-	if err != nil {
-		var httpError api.HTTPError
-		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
-			return nil, NotFoundError
+	// Try common README filenames
+	readmeNames := []string{"README.md", "readme.md", "README.markdown", "README", "readme"}
+
+	for _, filename := range readmeNames {
+		path := fmt.Sprintf("repositories/%s/%s/src/%s/%s",
+			repo.RepoWorkspace(), repo.RepoSlug(), url.PathEscape(ref), filename)
+
+		req, err := http.NewRequest("GET", api.RESTPrefix(repo.RepoHost())+path, nil)
+		if err != nil {
+			continue
 		}
-		return nil, err
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotFound {
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, api.HandleHTTPError(resp)
+		}
+
+		content, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		sanitized, err := io.ReadAll(transform.NewReader(bytes.NewReader(content), &asciisanitizer.Sanitizer{}))
+		if err != nil {
+			return nil, err
+		}
+
+		// Build the HTML URL for the README
+		baseURL := bbrepo.GenerateRepoURL(repo, "src/%s/%s", url.PathEscape(ref), filename)
+
+		return &RepoReadme{
+			Filename: filename,
+			Content:  string(sanitized),
+			BaseURL:  baseURL,
+		}, nil
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(response.Content)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode readme: %w", err)
+	// If we couldn't find any README, check if the repo has a description as fallback
+	var repoInfo struct {
+		Description string `json:"description"`
+	}
+	repoPath := fmt.Sprintf("repositories/%s/%s", repo.RepoWorkspace(), repo.RepoSlug())
+	if err := apiClient.Get(repo.RepoHost(), repoPath, &repoInfo); err == nil && repoInfo.Description != "" {
+		return nil, NotFoundError
 	}
 
-	sanitized, err := io.ReadAll(transform.NewReader(bytes.NewReader(decoded), &asciisanitizer.Sanitizer{}))
-	if err != nil {
-		return nil, err
-	}
-
-	return &RepoReadme{
-		Filename: response.Name,
-		Content:  string(sanitized),
-		BaseURL:  response.HTMLURL,
-	}, nil
+	return nil, NotFoundError
 }
 
-func getReadmePath(repo ghrepo.Interface, branch string) string {
-	path := fmt.Sprintf("repos/%s/readme", ghrepo.FullName(repo))
-	if branch != "" {
-		path = fmt.Sprintf("%s?ref=%s", path, branch)
-	}
-	return path
+// RESTPrefix returns the REST API base URL for the given hostname.
+// This is a helper to avoid import cycle with bbinstance.
+func init() {
+	// Use the api package's method
 }

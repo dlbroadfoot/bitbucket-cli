@@ -8,13 +8,10 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	aliasCmd "github.com/cli/bb/v2/pkg/cmd/alias"
 	"github.com/cli/bb/v2/pkg/cmd/alias/shared"
-	apiCmd "github.com/cli/bb/v2/pkg/cmd/api"
 	authCmd "github.com/cli/bb/v2/pkg/cmd/auth"
 	completionCmd "github.com/cli/bb/v2/pkg/cmd/completion"
 	configCmd "github.com/cli/bb/v2/pkg/cmd/config"
 	"github.com/cli/bb/v2/pkg/cmd/factory"
-	issueCmd "github.com/cli/bb/v2/pkg/cmd/issue"
-	prCmd "github.com/cli/bb/v2/pkg/cmd/pr"
 	projectCmd "github.com/cli/bb/v2/pkg/cmd/project"
 	repoCmd "github.com/cli/bb/v2/pkg/cmd/repo"
 	versionCmd "github.com/cli/bb/v2/pkg/cmd/version"
@@ -43,9 +40,9 @@ func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) (*cobra.Command, 
 		Short: "Bitbucket CLI",
 		Long:  `Work seamlessly with Bitbucket from the command line.`,
 		Example: heredoc.Doc(`
-			$ bb issue create
-			$ bb pr list
-			$ bb pr checkout 321
+			$ bb repo list
+			$ bb repo clone workspace/repo
+			$ bb auth login
 		`),
 		Annotations: map[string]string{
 			"versionInfo": versionCmd.Format(version, buildDate),
@@ -99,10 +96,12 @@ func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) (*cobra.Command, 
 	repoResolvingCmdFactory := *f
 	repoResolvingCmdFactory.BaseRepo = factory.SmartBaseRepoFunc(f)
 
-	cmd.AddCommand(prCmd.NewCmdPR(&repoResolvingCmdFactory))
-	cmd.AddCommand(issueCmd.NewCmdIssue(&repoResolvingCmdFactory))
+	// TODO: Add back when PR and Issue commands are implemented for Bitbucket
+	// cmd.AddCommand(prCmd.NewCmdPR(&repoResolvingCmdFactory))
+	// cmd.AddCommand(issueCmd.NewCmdIssue(&repoResolvingCmdFactory))
 	cmd.AddCommand(repoCmd.NewCmdRepo(&repoResolvingCmdFactory))
-	cmd.AddCommand(apiCmd.NewCmdApi(&repoResolvingCmdFactory, nil))
+	// TODO: Add back when API command is implemented for Bitbucket
+	// cmd.AddCommand(apiCmd.NewCmdApi(&repoResolvingCmdFactory, nil))
 
 	// Help topics
 	var referenceCmd *cobra.Command

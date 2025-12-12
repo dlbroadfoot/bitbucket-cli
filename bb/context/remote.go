@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/cli/bb/v2/git"
-	"github.com/cli/bb/v2/internal/ghrepo"
+	"github.com/cli/bb/v2/internal/bbrepo"
 )
 
 // Remotes represents a set of git remotes
@@ -24,14 +24,14 @@ func (r Remotes) FindByName(names ...string) (*Remote, error) {
 	return nil, fmt.Errorf("no matching remote found")
 }
 
-// FindByRepo returns the first Remote that points to a specific GitHub repository
-func (r Remotes) FindByRepo(owner, name string) (*Remote, error) {
+// FindByRepo returns the first Remote that points to a specific Bitbucket repository
+func (r Remotes) FindByRepo(workspace, repoSlug string) (*Remote, error) {
 	for _, rem := range r {
-		if strings.EqualFold(rem.RepoOwner(), owner) && strings.EqualFold(rem.RepoName(), name) {
+		if strings.EqualFold(rem.RepoWorkspace(), workspace) && strings.EqualFold(rem.RepoSlug(), repoSlug) {
 			return rem, nil
 		}
 	}
-	return nil, fmt.Errorf("no matching remote found; looking for %s/%s", owner, name)
+	return nil, fmt.Errorf("no matching remote found; looking for %s/%s", workspace, repoSlug)
 }
 
 // Filter remotes by given hostnames, maintains original order
@@ -61,7 +61,7 @@ func remoteNameSortScore(name string) int {
 	switch strings.ToLower(name) {
 	case "upstream":
 		return 3
-	case "github":
+	case "bitbucket":
 		return 2
 	case "origin":
 		return 1
@@ -77,23 +77,23 @@ func (r Remotes) Less(i, j int) bool {
 	return remoteNameSortScore(r[i].Name) > remoteNameSortScore(r[j].Name)
 }
 
-// Remote represents a git remote mapped to a GitHub repository
+// Remote represents a git remote mapped to a Bitbucket repository
 type Remote struct {
 	*git.Remote
-	Repo ghrepo.Interface
+	Repo bbrepo.Interface
 }
 
-// RepoName is the name of the GitHub repository
-func (r Remote) RepoName() string {
-	return r.Repo.RepoName()
+// RepoSlug is the slug of the Bitbucket repository
+func (r Remote) RepoSlug() string {
+	return r.Repo.RepoSlug()
 }
 
-// RepoOwner is the name of the GitHub account that owns the repo
-func (r Remote) RepoOwner() string {
-	return r.Repo.RepoOwner()
+// RepoWorkspace is the name of the Bitbucket workspace that owns the repo
+func (r Remote) RepoWorkspace() string {
+	return r.Repo.RepoWorkspace()
 }
 
-// RepoHost is the GitHub hostname that the remote points to
+// RepoHost is the Bitbucket hostname that the remote points to
 func (r Remote) RepoHost() string {
 	return r.Repo.RepoHost()
 }
@@ -104,12 +104,12 @@ type Translator interface {
 
 func TranslateRemotes(gitRemotes git.RemoteSet, translator Translator) (remotes Remotes) {
 	for _, r := range gitRemotes {
-		var repo ghrepo.Interface
+		var repo bbrepo.Interface
 		if r.FetchURL != nil {
-			repo, _ = ghrepo.FromURL(translator.Translate(r.FetchURL))
+			repo, _ = bbrepo.FromURL(translator.Translate(r.FetchURL))
 		}
 		if r.PushURL != nil && repo == nil {
-			repo, _ = ghrepo.FromURL(translator.Translate(r.PushURL))
+			repo, _ = bbrepo.FromURL(translator.Translate(r.PushURL))
 		}
 		if repo == nil {
 			continue

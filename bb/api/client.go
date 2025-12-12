@@ -1,122 +1,116 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
+	"net/url"
 	"strings"
 
-	ghAPI "github.com/cli/go-gh/v2/pkg/api"
-	ghauth "github.com/cli/go-gh/v2/pkg/auth"
+	"github.com/cli/bb/v2/internal/bbinstance"
 )
 
 const (
-	accept          = "Accept"
-	authorization   = "Authorization"
-	cacheTTL        = "X-GH-CACHE-TTL"
-	graphqlFeatures = "GraphQL-Features"
-	features        = "merge_queue"
-	userAgent       = "User-Agent"
+	accept        = "Accept"
+	authorization = "Authorization"
+	contentType   = "Content-Type"
+	userAgent     = "User-Agent"
 )
 
-var linkRE = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"`)
-
-func NewClientFromHTTP(httpClient *http.Client) *Client {
-	client := &Client{http: httpClient}
-	return client
-}
-
+// Client is a Bitbucket API client.
 type Client struct {
 	http *http.Client
 }
 
+// NewClientFromHTTP creates a new Client from an existing http.Client.
+func NewClientFromHTTP(httpClient *http.Client) *Client {
+	return &Client{http: httpClient}
+}
+
+// HTTP returns the underlying http.Client.
 func (c *Client) HTTP() *http.Client {
 	return c.http
 }
 
-type GraphQLError struct {
-	*ghAPI.GraphQLError
-}
-
+// HTTPError represents an HTTP error response from the Bitbucket API.
 type HTTPError struct {
-	*ghAPI.HTTPError
-	scopesSuggestion string
+	StatusCode int
+	Message    string
+	RequestURL *url.URL
+	Body       string
 }
 
-func (err HTTPError) ScopesSuggestion() string {
-	return err.scopesSuggestion
-}
-
-// GraphQL performs a GraphQL request using the query string and parses the response into data receiver. If there are errors in the response,
-// GraphQLError will be returned, but the receiver will also be partially populated.
-func (c Client) GraphQL(hostname string, query string, variables map[string]interface{}, data interface{}) error {
-	opts := clientOptions(hostname, c.http.Transport)
-	opts.Headers[graphqlFeatures] = features
-	gqlClient, err := ghAPI.NewGraphQLClient(opts)
-	if err != nil {
-		return err
+func (e HTTPError) Error() string {
+	if e.Message != "" {
+		return fmt.Sprintf("HTTP %d: %s (%s)", e.StatusCode, e.Message, e.RequestURL)
 	}
-	return handleResponse(gqlClient.Do(query, variables, data))
-}
-
-// Mutate performs a GraphQL mutation based on a struct and parses the response with the same struct as the receiver. If there are errors in the response,
-// GraphQLError will be returned, but the receiver will also be partially populated.
-func (c Client) Mutate(hostname, name string, mutation interface{}, variables map[string]interface{}) error {
-	opts := clientOptions(hostname, c.http.Transport)
-	opts.Headers[graphqlFeatures] = features
-	gqlClient, err := ghAPI.NewGraphQLClient(opts)
-	if err != nil {
-		return err
-	}
-	return handleResponse(gqlClient.Mutate(name, mutation, variables))
-}
-
-// Query performs a GraphQL query based on a struct and parses the response with the same struct as the receiver. If there are errors in the response,
-// GraphQLError will be returned, but the receiver will also be partially populated.
-func (c Client) Query(hostname, name string, query interface{}, variables map[string]interface{}) error {
-	opts := clientOptions(hostname, c.http.Transport)
-	opts.Headers[graphqlFeatures] = features
-	gqlClient, err := ghAPI.NewGraphQLClient(opts)
-	if err != nil {
-		return err
-	}
-	return handleResponse(gqlClient.Query(name, query, variables))
-}
-
-// QueryWithContext performs a GraphQL query based on a struct and parses the response with the same struct as the receiver. If there are errors in the response,
-// GraphQLError will be returned, but the receiver will also be partially populated.
-func (c Client) QueryWithContext(ctx context.Context, hostname, name string, query interface{}, variables map[string]interface{}) error {
-	opts := clientOptions(hostname, c.http.Transport)
-	opts.Headers[graphqlFeatures] = features
-	gqlClient, err := ghAPI.NewGraphQLClient(opts)
-	if err != nil {
-		return err
-	}
-	return handleResponse(gqlClient.QueryWithContext(ctx, name, query, variables))
+	return fmt.Sprintf("HTTP %d (%s)", e.StatusCode, e.RequestURL)
 }
 
 // REST performs a REST request and parses the response.
-func (c Client) REST(hostname string, method string, p string, body io.Reader, data interface{}) error {
-	opts := clientOptions(hostname, c.http.Transport)
-	restClient, err := ghAPI.NewRESTClient(opts)
+func (c *Client) REST(hostname string, method string, path string, body io.Reader, data interface{}) error {
+	url := bbinstance.RESTPrefix(hostname) + strings.TrimPrefix(path, "/")
+	return c.RESTWithURL(method, url, body, data)
+}
+
+// RESTWithURL performs a REST request to a full URL and parses the response.
+func (c *Client) RESTWithURL(method string, url string, body io.Reader, data interface{}) error {
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return err
 	}
-	return handleResponse(restClient.Do(method, p, body, data))
+
+	req.Header.Set(accept, "application/json")
+	if body != nil {
+		req.Header.Set(contentType, "application/json")
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	success := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !success {
+		return HandleHTTPError(resp)
+	}
+
+	if resp.StatusCode == http.StatusNoContent {
+		return nil
+	}
+
+	if data == nil {
+		return nil
+	}
+
+	return json.NewDecoder(resp.Body).Decode(data)
 }
 
-func (c Client) RESTWithNext(hostname string, method string, p string, body io.Reader, data interface{}) (string, error) {
-	opts := clientOptions(hostname, c.http.Transport)
-	restClient, err := ghAPI.NewRESTClient(opts)
+// RESTWithNext performs a REST request and returns the next page URL from the response.
+// This is used for Bitbucket's pagination which includes a "next" field in the response body.
+func (c *Client) RESTWithNext(hostname string, method string, path string, body io.Reader, data interface{}) (string, error) {
+	url := bbinstance.RESTPrefix(hostname) + strings.TrimPrefix(path, "/")
+	return c.RESTWithNextURL(method, url, body, data)
+}
+
+// RESTWithNextURL performs a REST request to a full URL and returns the next page URL.
+func (c *Client) RESTWithNextURL(method string, url string, body io.Reader, data interface{}) (string, error) {
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return "", err
 	}
 
-	resp, err := restClient.Request(method, p, body)
+	req.Header.Set(accept, "application/json")
+	if body != nil {
+		req.Header.Set(contentType, "application/json")
+	}
+
+	resp, err := c.http.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -131,144 +125,188 @@ func (c Client) RESTWithNext(hostname string, method string, p string, body io.R
 		return "", nil
 	}
 
-	b, err := io.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
 
-	err = json.Unmarshal(b, &data)
-	if err != nil {
-		return "", err
-	}
-
-	var next string
-	for _, m := range linkRE.FindAllStringSubmatch(resp.Header.Get("Link"), -1) {
-		if len(m) > 2 && m[2] == "next" {
-			next = m[1]
+	if data != nil {
+		if err := json.Unmarshal(responseBody, data); err != nil {
+			return "", err
 		}
 	}
 
-	return next, nil
+	// Extract "next" URL from paginated response
+	var paginationInfo struct {
+		Next string `json:"next"`
+	}
+	if err := json.Unmarshal(responseBody, &paginationInfo); err != nil {
+		return "", nil // Ignore pagination parsing errors
+	}
+
+	return paginationInfo.Next, nil
 }
 
-// HandleHTTPError parses a http.Response into a HTTPError.
-//
-// The caller is responsible to close the response body stream.
-func HandleHTTPError(resp *http.Response) error {
-	return handleResponse(ghAPI.HandleHTTPError(resp))
-}
+// RESTWithContext performs a REST request with a context.
+func (c *Client) RESTWithContext(ctx context.Context, hostname string, method string, path string, body io.Reader, data interface{}) error {
+	url := bbinstance.RESTPrefix(hostname) + strings.TrimPrefix(path, "/")
 
-// handleResponse takes a ghAPI.HTTPError or ghAPI.GraphQLError and converts it into an
-// HTTPError or GraphQLError respectively.
-func handleResponse(err error) error {
-	if err == nil {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set(accept, "application/json")
+	if body != nil {
+		req.Header.Set(contentType, "application/json")
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	success := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !success {
+		return HandleHTTPError(resp)
+	}
+
+	if resp.StatusCode == http.StatusNoContent {
 		return nil
 	}
 
-	var restErr *ghAPI.HTTPError
-	if errors.As(err, &restErr) {
-		return HTTPError{
-			HTTPError: restErr,
-			scopesSuggestion: generateScopesSuggestion(restErr.StatusCode,
-				restErr.Headers.Get("X-Accepted-Oauth-Scopes"),
-				restErr.Headers.Get("X-Oauth-Scopes"),
-				restErr.RequestURL.Hostname()),
+	if data == nil {
+		return nil
+	}
+
+	return json.NewDecoder(resp.Body).Decode(data)
+}
+
+// Delete performs a DELETE request.
+func (c *Client) Delete(hostname string, path string) error {
+	return c.REST(hostname, http.MethodDelete, path, nil, nil)
+}
+
+// Get performs a GET request and parses the response.
+func (c *Client) Get(hostname string, path string, data interface{}) error {
+	return c.REST(hostname, http.MethodGet, path, nil, data)
+}
+
+// Post performs a POST request with a JSON body.
+func (c *Client) Post(hostname string, path string, input interface{}, data interface{}) error {
+	body, err := jsonBody(input)
+	if err != nil {
+		return err
+	}
+	return c.REST(hostname, http.MethodPost, path, body, data)
+}
+
+// Put performs a PUT request with a JSON body.
+func (c *Client) Put(hostname string, path string, input interface{}, data interface{}) error {
+	body, err := jsonBody(input)
+	if err != nil {
+		return err
+	}
+	return c.REST(hostname, http.MethodPut, path, body, data)
+}
+
+// Patch performs a PATCH request with a JSON body.
+func (c *Client) Patch(hostname string, path string, input interface{}, data interface{}) error {
+	body, err := jsonBody(input)
+	if err != nil {
+		return err
+	}
+	return c.REST(hostname, http.MethodPatch, path, body, data)
+}
+
+// jsonBody encodes input as JSON and returns a reader.
+func jsonBody(input interface{}) (io.Reader, error) {
+	if input == nil {
+		return nil, nil
+	}
+	b, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
+}
+
+// HandleHTTPError parses an HTTP response into an HTTPError.
+func HandleHTTPError(resp *http.Response) error {
+	body, _ := io.ReadAll(resp.Body)
+
+	var message string
+
+	// Try to parse Bitbucket error response
+	var errResp ErrorResponse
+	if err := json.Unmarshal(body, &errResp); err == nil && errResp.Error.Message != "" {
+		message = errResp.Error.Message
+		if errResp.Error.Detail != "" {
+			message = fmt.Sprintf("%s: %s", message, errResp.Error.Detail)
+		}
+	} else {
+		// Fallback to raw body
+		message = strings.TrimSpace(string(body))
+		if message == "" {
+			message = http.StatusText(resp.StatusCode)
 		}
 	}
 
-	var gqlErr *ghAPI.GraphQLError
-	if errors.As(err, &gqlErr) {
-		return GraphQLError{
-			GraphQLError: gqlErr,
-		}
-	}
-
-	return err
-}
-
-// ScopesSuggestion is an error messaging utility that prints the suggestion to request additional OAuth
-// scopes in case a server response indicates that there are missing scopes.
-func ScopesSuggestion(resp *http.Response) string {
-	return generateScopesSuggestion(resp.StatusCode,
-		resp.Header.Get("X-Accepted-Oauth-Scopes"),
-		resp.Header.Get("X-Oauth-Scopes"),
-		resp.Request.URL.Hostname())
-}
-
-// EndpointNeedsScopes adds additional OAuth scopes to an HTTP response as if they were returned from the
-// server endpoint. This improves HTTP 4xx error messaging for endpoints that don't explicitly list the
-// OAuth scopes they need.
-func EndpointNeedsScopes(resp *http.Response, s string) {
-	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		oldScopes := resp.Header.Get("X-Accepted-Oauth-Scopes")
-		resp.Header.Set("X-Accepted-Oauth-Scopes", fmt.Sprintf("%s, %s", oldScopes, s))
+	return HTTPError{
+		StatusCode: resp.StatusCode,
+		Message:    message,
+		RequestURL: resp.Request.URL,
+		Body:       string(body),
 	}
 }
 
-func generateScopesSuggestion(statusCode int, endpointNeedsScopes, tokenHasScopes, hostname string) string {
-	if statusCode < 400 || statusCode > 499 || statusCode == 422 {
-		return ""
-	}
-
-	if tokenHasScopes == "" {
-		return ""
-	}
-
-	gotScopes := map[string]struct{}{}
-	for _, s := range strings.Split(tokenHasScopes, ",") {
-		s = strings.TrimSpace(s)
-		gotScopes[s] = struct{}{}
-
-		// Certain scopes may be grouped under a single "top-level" scope. The following branch
-		// statements include these grouped/implied scopes when the top-level scope is encountered.
-		// See https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps.
-		if s == "repo" {
-			gotScopes["repo:status"] = struct{}{}
-			gotScopes["repo_deployment"] = struct{}{}
-			gotScopes["public_repo"] = struct{}{}
-			gotScopes["repo:invite"] = struct{}{}
-			gotScopes["security_events"] = struct{}{}
-		} else if s == "user" {
-			gotScopes["read:user"] = struct{}{}
-			gotScopes["user:email"] = struct{}{}
-			gotScopes["user:follow"] = struct{}{}
-		} else if s == "codespace" {
-			gotScopes["codespace:secrets"] = struct{}{}
-		} else if strings.HasPrefix(s, "admin:") {
-			gotScopes["read:"+strings.TrimPrefix(s, "admin:")] = struct{}{}
-			gotScopes["write:"+strings.TrimPrefix(s, "admin:")] = struct{}{}
-		} else if strings.HasPrefix(s, "write:") {
-			gotScopes["read:"+strings.TrimPrefix(s, "write:")] = struct{}{}
-		}
-	}
-
-	for _, s := range strings.Split(endpointNeedsScopes, ",") {
-		s = strings.TrimSpace(s)
-		if _, gotScope := gotScopes[s]; s == "" || gotScope {
-			continue
-		}
-		return fmt.Sprintf(
-			"This API operation needs the %[1]q scope. To request it, run:  gh auth refresh -h %[2]s -s %[1]s",
-			s,
-			ghauth.NormalizeHostname(hostname),
-		)
-	}
-
-	return ""
+// IsNotFoundError checks if an error is a 404 Not Found error.
+func IsNotFoundError(err error) bool {
+	var httpErr HTTPError
+	return errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusNotFound
 }
 
-func clientOptions(hostname string, transport http.RoundTripper) ghAPI.ClientOptions {
-	// AuthToken, and Headers are being handled by transport,
-	// so let go-gh know that it does not need to resolve them.
-	opts := ghAPI.ClientOptions{
-		AuthToken: "none",
-		Headers: map[string]string{
-			authorization: "",
-		},
-		Host:               hostname,
-		SkipDefaultHeaders: true,
-		Transport:          transport,
-		LogIgnoreEnv:       true,
+// IsUnauthorizedError checks if an error is a 401 Unauthorized error.
+func IsUnauthorizedError(err error) bool {
+	var httpErr HTTPError
+	return errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusUnauthorized
+}
+
+// IsForbiddenError checks if an error is a 403 Forbidden error.
+func IsForbiddenError(err error) bool {
+	var httpErr HTTPError
+	return errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusForbidden
+}
+
+// IsConflictError checks if an error is a 409 Conflict error.
+func IsConflictError(err error) bool {
+	var httpErr HTTPError
+	return errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusConflict
+}
+
+// CurrentLoginName returns the username of the currently authenticated user.
+// Bitbucket API: GET /2.0/user
+func CurrentLoginName(client *Client, hostname string) (string, error) {
+	var user User
+	if err := client.Get(hostname, "user", &user); err != nil {
+		return "", err
 	}
-	return opts
+	return user.Username, nil
+}
+
+// CurrentUser returns the full user object for the currently authenticated user.
+// Bitbucket API: GET /2.0/user
+func CurrentUser(client *Client, hostname string) (*User, error) {
+	var user User
+	if err := client.Get(hostname, "user", &user); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// RESTPrefix returns the REST API base URL for a hostname.
+// This is exported for use by other packages.
+func RESTPrefix(hostname string) string {
+	return bbinstance.RESTPrefix(hostname)
 }

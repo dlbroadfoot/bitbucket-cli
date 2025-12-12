@@ -1,25 +1,17 @@
 package shared
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"slices"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/bb/v2/api"
-	"github.com/cli/bb/v2/internal/authflow"
-	"github.com/cli/bb/v2/internal/browser"
-	"github.com/cli/bb/v2/internal/ghinstance"
-	"github.com/cli/bb/v2/pkg/cmd/ssh-key/add"
+	"github.com/cli/bb/v2/internal/bbinstance"
 	"github.com/cli/bb/v2/pkg/iostreams"
-	"github.com/cli/bb/v2/pkg/ssh"
 )
-
-const defaultSSHKeyTitle = "GitHub CLI"
 
 type iconfig interface {
 	Login(string, string, string, string, bool) (bool, error)
@@ -27,29 +19,22 @@ type iconfig interface {
 }
 
 type LoginOptions struct {
-	IO               *iostreams.IOStreams
-	Config           iconfig
-	HTTPClient       *http.Client
-	PlainHTTPClient  *http.Client
-	Hostname         string
-	Interactive      bool
-	Web              bool
-	Scopes           []string
-	GitProtocol      string
-	Prompter         Prompt
-	Browser          browser.Browser
-	CredentialFlow   *GitCredentialFlow
-	SecureStorage    bool
-	SkipSSHKeyPrompt bool
-	CopyToClipboard  bool
-
-	sshContext ssh.Context
+	IO              *iostreams.IOStreams
+	Config          iconfig
+	HTTPClient      *http.Client
+	Hostname        string
+	Interactive     bool
+	GitProtocol     string
+	Prompter        Prompt
+	CredentialFlow  *GitCredentialFlow
+	SecureStorage   bool
 }
 
+// Login performs the Bitbucket login flow using App Passwords.
+// App Passwords are Bitbucket's equivalent of GitHub PATs.
 func Login(opts *LoginOptions) error {
 	cfg := opts.Config
 	hostname := opts.Hostname
-	httpClient := opts.HTTPClient
 	cs := opts.IO.ColorScheme()
 
 	gitProtocol := strings.ToLower(opts.GitProtocol)
@@ -69,129 +54,51 @@ func Login(opts *LoginOptions) error {
 		gitProtocol = strings.ToLower(proto)
 	}
 
-	var additionalScopes []string
-
 	if opts.Interactive && gitProtocol == "https" {
 		if err := opts.CredentialFlow.Prompt(hostname); err != nil {
 			return err
 		}
-		additionalScopes = append(additionalScopes, opts.CredentialFlow.Scopes()...)
 	}
 
-	var keyToUpload string
-	keyTitle := defaultSSHKeyTitle
-	if opts.Interactive && !opts.SkipSSHKeyPrompt && gitProtocol == "ssh" {
-		pubKeys, err := opts.sshContext.LocalPublicKeys()
-		if err != nil {
-			return err
-		}
+	// Bitbucket uses App Passwords - prompt for username and app password
+	fmt.Fprint(opts.IO.ErrOut, heredoc.Docf(`
+		Tip: you can generate an App Password here https://%s/account/settings/app-passwords/
+		Required permissions: Account (Read), Repositories (Read, Write), Pull Requests (Read, Write)
+	`, hostname))
 
-		if len(pubKeys) > 0 {
-			options := append(pubKeys, "Skip")
-			keyChoice, err := opts.Prompter.Select(
-				"Upload your SSH public key to your GitHub account?",
-				options[0],
-				options)
-			if err != nil {
-				return err
-			}
-			if keyChoice < len(pubKeys) {
-				keyToUpload = pubKeys[keyChoice]
-			}
-		} else if opts.sshContext.HasKeygen() {
-			sshChoice, err := opts.Prompter.Confirm("Generate a new SSH key to add to your GitHub account?", true)
-			if err != nil {
-				return err
-			}
-
-			if sshChoice {
-				passphrase, err := opts.Prompter.Password(
-					"Enter a passphrase for your new SSH key (Optional):")
-				if err != nil {
-					return err
-				}
-				keyPair, err := opts.sshContext.GenerateSSHKey("id_ed25519", passphrase)
-				if err != nil {
-					return err
-				}
-				keyToUpload = keyPair.PublicKeyPath
-			}
-		}
-
-		if keyToUpload != "" {
-			var err error
-			keyTitle, err = opts.Prompter.Input(
-				"Title for your SSH key:", defaultSSHKeyTitle)
-			if err != nil {
-				return err
-			}
-
-			additionalScopes = append(additionalScopes, "admin:public_key")
-		}
+	username, err := opts.Prompter.Input("Bitbucket username:", "")
+	if err != nil {
+		return err
 	}
-
-	var authMode int
-	if opts.Web {
-		authMode = 0
-	} else if opts.Interactive {
-		options := []string{"Login with a web browser", "Paste an authentication token"}
-		var err error
-		authMode, err = opts.Prompter.Select(
-			"How would you like to authenticate GitHub CLI?",
-			options[0],
-			options)
-		if err != nil {
-			return err
-		}
-	}
-
-	var authToken string
-	var username string
-
-	if authMode == 0 {
-		var err error
-		authToken, username, err = authflow.AuthFlow(opts.PlainHTTPClient, hostname, opts.IO, "", append(opts.Scopes, additionalScopes...), opts.Interactive, opts.Browser, opts.CopyToClipboard)
-		if err != nil {
-			return fmt.Errorf("failed to authenticate via web browser: %w", err)
-		}
-		fmt.Fprintf(opts.IO.ErrOut, "%s Authentication complete.\n", cs.SuccessIcon())
-	} else {
-		minimumScopes := append([]string{"repo", "read:org"}, additionalScopes...)
-		fmt.Fprint(opts.IO.ErrOut, heredoc.Docf(`
-			Tip: you can generate a Personal Access Token here https://%s/settings/tokens
-			The minimum required scopes are %s.
-		`, hostname, scopesSentence(minimumScopes)))
-
-		var err error
-		authToken, err = opts.Prompter.AuthToken()
-		if err != nil {
-			return err
-		}
-
-		if err := HasMinimumScopes(httpClient, hostname, authToken); err != nil {
-			return fmt.Errorf("error validating token: %w", err)
-		}
-	}
-
 	if username == "" {
-		var err error
-		username, err = GetCurrentLogin(httpClient, hostname, authToken)
-		if err != nil {
-			return fmt.Errorf("error retrieving current user: %w", err)
-		}
+		return fmt.Errorf("username is required")
 	}
+
+	appPassword, err := opts.Prompter.Password("App password:")
+	if err != nil {
+		return err
+	}
+	if appPassword == "" {
+		return fmt.Errorf("app password is required")
+	}
+
+	// Bitbucket tokens are stored as "username:app_password"
+	authToken := fmt.Sprintf("%s:%s", username, appPassword)
+
+	// Verify the credentials by calling the Bitbucket API
+	if err := verifyCredentials(opts.HTTPClient, hostname, username, appPassword); err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+
+	fmt.Fprintf(opts.IO.ErrOut, "%s Authentication complete.\n", cs.SuccessIcon())
 
 	// Get these users before adding the new one, so that we can
 	// check whether the user was already logged in later.
-	//
-	// In this case we ignore the error if the host doesn't exist
-	// because that can occur when the user is logging into a host
-	// for the first time.
 	usersForHost := cfg.UsersForHost(hostname)
 	userWasAlreadyLoggedIn := slices.Contains(usersForHost, username)
 
 	if gitProtocol != "" {
-		fmt.Fprintf(opts.IO.ErrOut, "- gh config set -h %s git_protocol %s\n", hostname, gitProtocol)
+		fmt.Fprintf(opts.IO.ErrOut, "- bb config set -h %s git_protocol %s\n", hostname, gitProtocol)
 		fmt.Fprintf(opts.IO.ErrOut, "%s Configured git protocol\n", cs.SuccessIcon())
 	}
 
@@ -210,19 +117,6 @@ func Login(opts *LoginOptions) error {
 		}
 	}
 
-	if keyToUpload != "" {
-		uploaded, err := sshKeyUpload(httpClient, hostname, keyToUpload, keyTitle)
-		if err != nil {
-			return err
-		}
-
-		if uploaded {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Uploaded the SSH key to your GitHub account: %s\n", cs.SuccessIcon(), cs.Bold(keyToUpload))
-		} else {
-			fmt.Fprintf(opts.IO.ErrOut, "%s SSH key already existed on your GitHub account: %s\n", cs.SuccessIcon(), cs.Bold(keyToUpload))
-		}
-	}
-
 	fmt.Fprintf(opts.IO.ErrOut, "%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(username))
 	if userWasAlreadyLoggedIn {
 		fmt.Fprintf(opts.IO.ErrOut, "%s You were already logged in to this account\n", cs.WarningIcon())
@@ -231,51 +125,47 @@ func Login(opts *LoginOptions) error {
 	return nil
 }
 
-func scopesSentence(scopes []string) string {
-	quoted := make([]string, len(scopes))
-	for i, s := range scopes {
-		quoted[i] = fmt.Sprintf("'%s'", s)
-	}
-	return strings.Join(quoted, ", ")
-}
+// verifyCredentials verifies the username and app password against the Bitbucket API.
+func verifyCredentials(httpClient *http.Client, hostname, username, appPassword string) error {
+	apiURL := bbinstance.RESTPrefix(hostname) + "user"
 
-func sshKeyUpload(httpClient *http.Client, hostname, keyFile string, title string) (bool, error) {
-	f, err := os.Open(keyFile)
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		return false, err
+		return err
 	}
-	defer f.Close()
+	req.SetBasicAuth(username, appPassword)
+	req.Header.Set("Accept", "application/json")
 
-	return add.SSHKeyUpload(httpClient, hostname, f, title)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return api.HandleHTTPError(resp)
+	}
+
+	// Verify the username matches
+	var user struct {
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if !strings.EqualFold(user.Username, username) {
+		return fmt.Errorf("username mismatch: expected %s, got %s", username, user.Username)
+	}
+
+	return nil
 }
 
+// GetCurrentLogin returns the username from a Bitbucket token (which is in username:app_password format).
 func GetCurrentLogin(httpClient httpClient, hostname, authToken string) (string, error) {
-	query := `query UserCurrent{viewer{login}}`
-	reqBody, err := json.Marshal(map[string]interface{}{"query": query})
-	if err != nil {
-		return "", err
+	// For Bitbucket, the username is the first part of the token
+	if idx := strings.Index(authToken, ":"); idx > 0 {
+		return authToken[:idx], nil
 	}
-	result := struct {
-		Data struct{ Viewer struct{ Login string } }
-	}{}
-	apiEndpoint := ghinstance.GraphQLEndpoint(hostname)
-	req, err := http.NewRequest("POST", apiEndpoint, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Authorization", "token "+authToken)
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-	if res.StatusCode > 299 {
-		return "", api.HandleHTTPError(res)
-	}
-	decoder := json.NewDecoder(res.Body)
-	err = decoder.Decode(&result)
-	if err != nil {
-		return "", err
-	}
-	return result.Data.Viewer.Login, nil
+	return "", fmt.Errorf("invalid token format")
 }

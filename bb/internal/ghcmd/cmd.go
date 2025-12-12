@@ -149,12 +149,7 @@ func Main() exitCode {
 
 		var httpErr api.HTTPError
 		if errors.As(err, &httpErr) && httpErr.StatusCode == 401 {
-			fmt.Fprintln(stderr, "Try authenticating with:  gh auth login")
-		} else if u := factory.SSOURL(); u != "" {
-			// handles organization SAML enforcement error
-			fmt.Fprintf(stderr, "Authorize in your web browser:  %s\n", u)
-		} else if msg := httpErr.ScopesSuggestion(); msg != "" {
-			fmt.Fprintln(stderr, msg)
+			fmt.Fprintln(stderr, "Try authenticating with:  bb auth login")
 		}
 
 		return exitError
