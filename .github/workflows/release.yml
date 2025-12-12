@@ -36,6 +36,7 @@ jobs:
           workdir: bb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
