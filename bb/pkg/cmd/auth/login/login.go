@@ -1,6 +1,7 @@
 package login
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,14 +17,14 @@ import (
 )
 
 type LoginOptions struct {
-	IO              *iostreams.IOStreams
-	Config          func() (gh.Config, error)
-	Prompter        shared.Prompt
+	IO       *iostreams.IOStreams
+	Config   func() (gh.Config, error)
+	Prompter shared.Prompt
 
 	Interactive bool
 
 	Hostname        string
-	Username        string
+	Email           string // Atlassian account email for API tokens
 	Token           string
 	GitProtocol     string
 	InsecureStorage bool
@@ -47,16 +48,19 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 
 			The default hostname is %[1]sbitbucket.org%[1]s.
 
-			Authentication requires a Bitbucket App Password. To create one:
-			1. Go to https://bitbucket.org/account/settings/app-passwords/
-			2. Click "Create app password"
-			3. Select permissions: Account (Read), Repositories (Read, Write), Pull requests (Read, Write)
-			4. Copy the generated password
+			Authentication requires a Bitbucket API Token. To create one:
+			1. Go to https://bitbucket.org/account/settings/api-tokens/
+			2. Click "Create API token with scopes"
+			3. Select scopes: read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
+			4. Copy the generated token
 
-			Use %[1]s--with-token%[1]s to pass an app password on standard input, or enter it
+			Note: API tokens require your Atlassian account email (not your Bitbucket username)
+			for authentication.
+
+			Use %[1]s--with-token%[1]s to pass an API token on standard input, or enter it
 			interactively when prompted.
 
-			Alternatively, set the %[1]sBB_TOKEN%[1]s environment variable with your app password.
+			Alternatively, set the %[1]sBB_TOKEN%[1]s environment variable with your API token.
 			This method is most suitable for automation. See %[1]sbb help environment%[1]s for more info.
 
 			The git protocol to use for git operations can be set with %[1]s--git-protocol%[1]s.
@@ -65,11 +69,11 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 			# Start interactive setup
 			$ bb auth login
 
-			# Authenticate by reading the app password from a file
+			# Authenticate by reading the API token from a file
 			$ bb auth login --with-token < mytoken.txt
 
-			# Authenticate with a specific username
-			$ bb auth login --username myuser
+			# Authenticate with a specific email
+			$ bb auth login --email user@example.com
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if tokenStdin {
@@ -104,8 +108,8 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 	}
 
 	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "h", "", "The hostname of the Bitbucket instance to authenticate with")
-	cmd.Flags().StringVarP(&opts.Username, "username", "u", "", "Bitbucket username")
-	cmd.Flags().BoolVar(&tokenStdin, "with-token", false, "Read app password from standard input")
+	cmd.Flags().StringVarP(&opts.Email, "email", "e", "", "Atlassian account email for API token authentication")
+	cmd.Flags().BoolVar(&tokenStdin, "with-token", false, "Read API token from standard input")
 	cmdutil.StringEnumFlag(cmd, &opts.GitProtocol, "git-protocol", "p", "", []string{"ssh", "https"}, "The protocol to use for git operations on this host")
 	cmd.Flags().BoolVar(&opts.InsecureStorage, "insecure-storage", false, "Save authentication credentials in plain text instead of credential store")
 
@@ -128,41 +132,46 @@ func loginRun(opts *LoginOptions) error {
 		return cmdutil.SilentError
 	}
 
-	username := opts.Username
+	email := opts.Email
 	token := opts.Token
 
 	// Interactive prompts
 	if opts.Interactive {
-		if username == "" {
+		if email == "" {
+			fmt.Fprintln(opts.IO.ErrOut)
+			fmt.Fprintln(opts.IO.ErrOut, "Tip: Create an API token at https://bitbucket.org/account/settings/api-tokens/")
+			fmt.Fprintln(opts.IO.ErrOut, "Required scopes: read:account, read:repository, write:repository, read:pullrequest, write:pullrequest")
+			fmt.Fprintln(opts.IO.ErrOut)
+
 			var err error
-			username, err = opts.Prompter.Input("Bitbucket username:", "")
+			email, err = opts.Prompter.Input("Atlassian account email:", "")
 			if err != nil {
 				return err
 			}
-			username = strings.TrimSpace(username)
+			email = strings.TrimSpace(email)
 		}
 
 		if token == "" {
 			var err error
-			token, err = opts.Prompter.Password("App password:")
+			token, err = opts.Prompter.Password("API token:")
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	if username == "" {
-		return fmt.Errorf("username is required")
+	if email == "" {
+		return fmt.Errorf("email is required (use --email or enter interactively)")
 	}
 	if token == "" {
-		return fmt.Errorf("app password is required")
+		return fmt.Errorf("API token is required (use --with-token or enter interactively)")
 	}
 
-	// Verify credentials by making an API call
+	// Verify credentials and get username
 	cs := opts.IO.ColorScheme()
 	fmt.Fprintf(opts.IO.ErrOut, "%s Verifying credentials...\n", cs.Yellow("!"))
 
-	err = verifyCredentials(hostname, username, token)
+	username, err := verifyCredentialsAndGetUsername(hostname, email, token)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
@@ -182,9 +191,8 @@ func loginRun(opts *LoginOptions) error {
 	}
 
 	// Store credentials
-	// For Bitbucket, we store both username and token since Basic Auth requires both
-	// We'll store them as "username:token" in the token field
-	combinedToken := username + ":" + token
+	// For Bitbucket API tokens, we store email:token for Basic Auth
+	combinedToken := email + ":" + token
 
 	_, loginErr := authCfg.Login(hostname, username, combinedToken, gitProtocol, !opts.InsecureStorage)
 	if loginErr != nil {
@@ -196,30 +204,58 @@ func loginRun(opts *LoginOptions) error {
 	return nil
 }
 
-// verifyCredentials checks if the username and app password are valid
-func verifyCredentials(hostname, username, token string) error {
+// verifyCredentialsAndGetUsername checks if the email and API token are valid
+// and returns the Bitbucket username associated with the account.
+// It uses the /repositories/{workspace} endpoint which only requires read:repository:bitbucket scope.
+func verifyCredentialsAndGetUsername(hostname, email, token string) (string, error) {
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"user", nil)
+	// Extract potential workspace from email prefix
+	// This is used to query repositories which requires read:repository:bitbucket scope
+	emailPrefix := strings.Split(email, "@")[0]
+
+	// Use repositories endpoint - requires read:repository:bitbucket scope
+	// Query the user's own repositories to verify credentials and get owner info
+	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"repositories/"+emailPrefix+"?pagelen=1", nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	req.SetBasicAuth(username, token)
+	req.SetBasicAuth(email, token)
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 401 {
-		return fmt.Errorf("invalid username or app password")
+		return "", fmt.Errorf("invalid email or API token")
 	}
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("unexpected response status: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("unexpected response status: %d: %s", resp.StatusCode, string(body))
 	}
 
-	return nil
+	// Parse the response - repositories endpoint returns a paginated list
+	// We extract the username from the owner.nickname field
+	var reposResp struct {
+		Values []struct {
+			Owner struct {
+				Nickname string `json:"nickname"`
+			} `json:"owner"`
+		} `json:"values"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&reposResp); err != nil {
+		return "", fmt.Errorf("failed to parse repositories response: %w", err)
+	}
+
+	// Get username from owner info
+	if len(reposResp.Values) > 0 && reposResp.Values[0].Owner.Nickname != "" {
+		return reposResp.Values[0].Owner.Nickname, nil
+	}
+
+	// Fallback: use email prefix as username
+	return emailPrefix, nil
 }

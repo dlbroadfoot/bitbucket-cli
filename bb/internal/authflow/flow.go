@@ -1,6 +1,8 @@
 // Package authflow provides authentication flows for Bitbucket.
-// Bitbucket uses App Passwords (similar to GitHub PATs) for authentication.
-// OAuth device flow is not supported - we use simple username:app_password authentication.
+// Bitbucket supports two authentication methods:
+// 1. API Tokens (new) - requires Atlassian account email + API token
+// 2. App Passwords (legacy) - requires Bitbucket username + app password
+// OAuth device flow is not supported.
 package authflow
 
 import (
@@ -19,11 +21,63 @@ import (
 // AuthFlowResult contains the result of an authentication flow.
 type AuthFlowResult struct {
 	Username string
-	Token    string // This is "username:app_password" for Bitbucket
+	Token    string // This is "email:api_token" or "username:app_password" for Bitbucket
 }
 
-// AppPasswordAuth performs authentication using a Bitbucket App Password.
-// This is the primary authentication method for Bitbucket (no OAuth device flow).
+// APITokenAuth performs authentication using a Bitbucket API Token.
+// This is the recommended authentication method for Bitbucket Cloud.
+// API tokens require Atlassian account email (not username) for Basic Auth.
+func APITokenAuth(hostname string, IO *iostreams.IOStreams, prompter Prompter) (*AuthFlowResult, error) {
+	w := IO.ErrOut
+	cs := IO.ColorScheme()
+
+	// Show guidance for creating an API Token
+	fmt.Fprint(w, fmt.Sprintf(`
+Tip: you can generate an API Token here https://bitbucket.org/account/settings/api-tokens/
+Required scopes: read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
+
+Note: API tokens require your Atlassian account email (not your Bitbucket username).
+
+`, hostname))
+
+	// Prompt for email
+	email, err := prompter.Input("Atlassian account email:", "")
+	if err != nil {
+		return nil, err
+	}
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+
+	// Prompt for API token
+	apiToken, err := prompter.Password("API token:")
+	if err != nil {
+		return nil, err
+	}
+	if apiToken == "" {
+		return nil, fmt.Errorf("API token is required")
+	}
+
+	// Verify credentials and get username
+	username, err := verifyCredentialsAndGetUsername(hostname, email, apiToken)
+	if err != nil {
+		return nil, fmt.Errorf("authentication failed: %w", err)
+	}
+
+	fmt.Fprintf(w, "%s Authentication complete. Logged in as %s\n", cs.SuccessIcon(), username)
+
+	// Return the combined token (email:api_token format)
+	token := fmt.Sprintf("%s:%s", email, apiToken)
+
+	return &AuthFlowResult{
+		Username: username,
+		Token:    token,
+	}, nil
+}
+
+// AppPasswordAuth performs authentication using a Bitbucket App Password (legacy).
+// Consider using APITokenAuth instead for new integrations.
 func AppPasswordAuth(hostname string, IO *iostreams.IOStreams, prompter Prompter) (*AuthFlowResult, error) {
 	w := IO.ErrOut
 	cs := IO.ColorScheme()
@@ -67,6 +121,43 @@ Required permissions: Account (Read), Repositories (Read, Write), Pull Requests 
 		Username: username,
 		Token:    token,
 	}, nil
+}
+
+// verifyCredentialsAndGetUsername checks if the email and API token are valid
+// and returns the Bitbucket username associated with the account.
+func verifyCredentialsAndGetUsername(hostname, email, apiToken string) (string, error) {
+	apiURL := bbinstance.RESTPrefix(hostname) + "user"
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Set Basic Auth header with email:api_token
+	auth := base64.StdEncoding.EncodeToString([]byte(email + ":" + apiToken))
+	req.Header.Set("Authorization", "Basic "+auth)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	// Get the username from the response
+	var user struct {
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return user.Username, nil
 }
 
 // verifyCredentials checks if the username and app password are valid.

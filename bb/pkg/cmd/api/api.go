@@ -123,7 +123,12 @@ func apiRun(opts *ApiOptions) error {
 	if hostname == "" {
 		cfg, err := opts.Config()
 		if err == nil {
-			hostname, _ = cfg.Authentication().DefaultHost()
+			defaultHost, _ := cfg.Authentication().DefaultHost()
+			// Only use the config's default host if it's a Bitbucket host
+			// (avoid using github.com from shared config)
+			if bbinstance.IsCloud(defaultHost) || !strings.HasSuffix(defaultHost, "github.com") {
+				hostname = defaultHost
+			}
 		}
 		if hostname == "" {
 			hostname = bbinstance.Default()

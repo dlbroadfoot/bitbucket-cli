@@ -349,7 +349,7 @@ func buildEntry(opts buildEntryOptions) authEntry {
 
 	// If token is not writeable, then it came from an environment variable and
 	// we need to fetch the username as it won't be stored in the config.
-	// For BB_TOKEN format "username:app_password", extract the username from the token
+	// For BB_TOKEN format "email:api_token", extract the email from the token
 	if !authTokenWriteable(tokenSource) && opts.token != "" {
 		if idx := strings.Index(opts.token, ":"); idx > -1 {
 			entry.Login = opts.token[:idx]
@@ -380,21 +380,25 @@ func verifyToken(hostname, token string) error {
 		return fmt.Errorf("no token provided")
 	}
 
-	// Parse username:app_password format
-	var username, appPassword string
+	// Parse email:api_token format (Bitbucket API tokens use email for Basic Auth)
+	var email, apiToken string
 	if idx := strings.Index(token, ":"); idx > -1 {
-		username = token[:idx]
-		appPassword = token[idx+1:]
+		email = token[:idx]
+		apiToken = token[idx+1:]
 	} else {
-		return fmt.Errorf("invalid token format: expected username:app_password")
+		return fmt.Errorf("invalid token format: expected email:api_token")
 	}
 
+	// Extract workspace from email prefix to query repositories
+	// This endpoint requires read:repository:bitbucket scope (commonly granted)
+	emailPrefix := strings.Split(email, "@")[0]
+
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"user", nil)
+	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"repositories/"+emailPrefix+"?pagelen=1", nil)
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth(username, appPassword)
+	req.SetBasicAuth(email, apiToken)
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
