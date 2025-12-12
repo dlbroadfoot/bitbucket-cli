@@ -13,6 +13,7 @@ import (
 	completionCmd "github.com/cli/bb/v2/pkg/cmd/completion"
 	configCmd "github.com/cli/bb/v2/pkg/cmd/config"
 	"github.com/cli/bb/v2/pkg/cmd/factory"
+	issueCmd "github.com/cli/bb/v2/pkg/cmd/issue"
 	prCmd "github.com/cli/bb/v2/pkg/cmd/pr"
 	projectCmd "github.com/cli/bb/v2/pkg/cmd/project"
 	repoCmd "github.com/cli/bb/v2/pkg/cmd/repo"
@@ -99,6 +100,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) (*cobra.Command, 
 	repoResolvingCmdFactory.BaseRepo = factory.SmartBaseRepoFunc(f)
 
 	cmd.AddCommand(apiCmd.NewCmdApi(&repoResolvingCmdFactory, nil))
+	cmd.AddCommand(issueCmd.NewCmdIssue(&repoResolvingCmdFactory))
 	cmd.AddCommand(prCmd.NewCmdPR(&repoResolvingCmdFactory))
 	cmd.AddCommand(repoCmd.NewCmdRepo(&repoResolvingCmdFactory))
 
