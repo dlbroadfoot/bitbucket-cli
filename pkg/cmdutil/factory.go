@@ -1,0 +1,102 @@
+package cmdutil
+
+import (
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/dlbroadfoot/bitbucket-cli/context"
+	"github.com/dlbroadfoot/bitbucket-cli/git"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/browser"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/prompter"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+)
+
+type Factory struct {
+	AppVersion     string
+	ExecutableName string
+
+	Browser   browser.Browser
+	GitClient *git.Client
+	IOStreams *iostreams.IOStreams
+	Prompter  prompter.Prompter
+
+	BaseRepo func() (bbrepo.Interface, error)
+	Branch   func() (string, error)
+	Config   func() (gh.Config, error)
+	HttpClient func() (*http.Client, error)
+	// PlainHttpClient is a special HTTP client that does not automatically set
+	// auth and other headers. This is meant to be used in situations where the
+	// client needs to specify the headers itself (e.g. during login).
+	PlainHttpClient func() (*http.Client, error)
+	Remotes         func() (context.Remotes, error)
+}
+
+// Executable is the path to the currently invoked binary
+func (f *Factory) Executable() string {
+	bbPath := os.Getenv("BB_PATH")
+	if bbPath != "" {
+		return bbPath
+	}
+	if !strings.ContainsRune(f.ExecutableName, os.PathSeparator) {
+		f.ExecutableName = executable(f.ExecutableName)
+	}
+	return f.ExecutableName
+}
+
+// Finds the location of the executable for the current process as it's found in PATH, respecting symlinks.
+// If the process couldn't determine its location, return fallbackName. If the executable wasn't found in
+// PATH, return the absolute location to the program.
+//
+// The idea is that the result of this function is callable in the future and refers to the same
+// installation of bb, even across upgrades. This is needed primarily for Homebrew, which installs software
+// under a location such as `/usr/local/Cellar/bb/1.0.0/bin/bb` and symlinks it from `/usr/local/bin/bb`.
+// When the version is upgraded, Homebrew will often delete older versions, but keep the symlink. Because of
+// this, we want to refer to the `bb` binary as `/usr/local/bin/bb` and not as its internal Homebrew
+// location.
+//
+// None of this would be needed if we could just refer to Bitbucket CLI as `bb`, i.e. without using an absolute
+// path. However, for some reason Homebrew does not include `/usr/local/bin` in PATH when it invokes git
+// commands to update its taps. If `bb` (no path) is being used as git credential helper, as set up by `bb
+// auth login`, running `brew update` will print out authentication errors as git is unable to locate
+// Homebrew-installed `bb`.
+func executable(fallbackName string) string {
+	exe, err := os.Executable()
+	if err != nil {
+		return fallbackName
+	}
+
+	base := filepath.Base(exe)
+	path := os.Getenv("PATH")
+	for _, dir := range filepath.SplitList(path) {
+		p, err := filepath.Abs(filepath.Join(dir, base))
+		if err != nil {
+			continue
+		}
+		f, err := os.Lstat(p)
+		if err != nil {
+			continue
+		}
+
+		if p == exe {
+			return p
+		} else if f.Mode()&os.ModeSymlink != 0 {
+			realP, err := filepath.EvalSymlinks(p)
+			if err != nil {
+				continue
+			}
+			realExe, err := filepath.EvalSymlinks(exe)
+			if err != nil {
+				continue
+			}
+			if realP == realExe {
+				return p
+			}
+		}
+	}
+
+	return exe
+}
