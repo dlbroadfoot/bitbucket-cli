@@ -8,6 +8,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	aliasCmd "github.com/cli/bb/v2/pkg/cmd/alias"
 	"github.com/cli/bb/v2/pkg/cmd/alias/shared"
+	apiCmd "github.com/cli/bb/v2/pkg/cmd/api"
 	authCmd "github.com/cli/bb/v2/pkg/cmd/auth"
 	completionCmd "github.com/cli/bb/v2/pkg/cmd/completion"
 	configCmd "github.com/cli/bb/v2/pkg/cmd/config"
@@ -97,6 +98,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) (*cobra.Command, 
 	repoResolvingCmdFactory := *f
 	repoResolvingCmdFactory.BaseRepo = factory.SmartBaseRepoFunc(f)
 
+	cmd.AddCommand(apiCmd.NewCmdApi(&repoResolvingCmdFactory, nil))
 	cmd.AddCommand(prCmd.NewCmdPR(&repoResolvingCmdFactory))
 	cmd.AddCommand(repoCmd.NewCmdRepo(&repoResolvingCmdFactory))
 
