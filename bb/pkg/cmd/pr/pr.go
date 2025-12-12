@@ -3,6 +3,7 @@ package pr
 import (
 	"github.com/MakeNowJust/heredoc"
 	checkoutCmd "github.com/cli/bb/v2/pkg/cmd/pr/checkout"
+	commentCmd "github.com/cli/bb/v2/pkg/cmd/pr/comment"
 	createCmd "github.com/cli/bb/v2/pkg/cmd/pr/create"
 	listCmd "github.com/cli/bb/v2/pkg/cmd/pr/list"
 	mergeCmd "github.com/cli/bb/v2/pkg/cmd/pr/merge"
@@ -39,6 +40,7 @@ func NewCmdPR(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(createCmd.NewCmdCreate(f, nil))
 	cmd.AddCommand(mergeCmd.NewCmdMerge(f, nil))
 	cmd.AddCommand(checkoutCmd.NewCmdCheckout(f, nil))
+	cmd.AddCommand(commentCmd.NewCmdComment(f, nil))
 
 	return cmd
 }

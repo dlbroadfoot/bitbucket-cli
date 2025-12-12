@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cli/bb/v2/api"
+	"github.com/cli/bb/v2/internal/bbinstance"
 	"github.com/cli/bb/v2/internal/gh"
 	"github.com/cli/bb/v2/internal/tableprinter"
 	"github.com/cli/bb/v2/internal/text"
@@ -114,7 +115,11 @@ func listRun(opts *ListOptions) error {
 		return err
 	}
 
+	// Get the default host, filtering out GitHub hosts from shared config
 	host, _ := cfg.Authentication().DefaultHost()
+	if strings.Contains(host, "github.com") || host == "" {
+		host = bbinstance.Default()
+	}
 
 	filter := FilterOptions{
 		Visibility: opts.Visibility,

@@ -147,3 +147,36 @@ func PRStateFromString(state string) string {
 		return strings.ToUpper(state)
 	}
 }
+
+// Comment represents a Bitbucket pull request comment
+type Comment struct {
+	ID        int    `json:"id"`
+	CreatedOn string `json:"created_on"`
+	UpdatedOn string `json:"updated_on"`
+	Content   struct {
+		Raw    string `json:"raw"`
+		Markup string `json:"markup"`
+		HTML   string `json:"html"`
+	} `json:"content"`
+	User   User `json:"user"`
+	Inline *struct {
+		Path string `json:"path"`
+		From *int   `json:"from"`
+		To   *int   `json:"to"`
+	} `json:"inline,omitempty"`
+	Parent *struct {
+		ID int `json:"id"`
+	} `json:"parent,omitempty"`
+	Deleted bool   `json:"deleted"`
+	Links   Links  `json:"links"`
+}
+
+// CommentList represents a paginated list of comments
+type CommentList struct {
+	Size     int       `json:"size"`
+	Page     int       `json:"page"`
+	PageLen  int       `json:"pagelen"`
+	Next     string    `json:"next"`
+	Previous string    `json:"previous"`
+	Values   []Comment `json:"values"`
+}

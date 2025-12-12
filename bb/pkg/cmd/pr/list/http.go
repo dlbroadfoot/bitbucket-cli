@@ -89,3 +89,41 @@ func FetchPullRequest(client *http.Client, repo bbrepo.Interface, prID int) (*sh
 
 	return &pr, nil
 }
+
+// FetchPullRequestComments fetches comments for a pull request
+func FetchPullRequestComments(client *http.Client, repo bbrepo.Interface, prID int) ([]shared.Comment, error) {
+	path := fmt.Sprintf("repositories/%s/%s/pullrequests/%d/comments?pagelen=100",
+		repo.RepoWorkspace(), repo.RepoSlug(), prID)
+
+	apiURL := api.RESTPrefix(repo.RepoHost()) + path
+
+	var allComments []shared.Comment
+
+	for apiURL != "" {
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, api.HandleHTTPError(resp)
+		}
+
+		var result shared.CommentList
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, err
+		}
+
+		allComments = append(allComments, result.Values...)
+		apiURL = result.Next
+	}
+
+	return allComments, nil
+}
