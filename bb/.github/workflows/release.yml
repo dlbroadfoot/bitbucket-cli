@@ -1,0 +1,212 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # Build all binaries and archives using GoReleaser
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean --skip=publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.deb
+            dist/*.rpm
+
+      - name: Upload macOS binaries for PKG build
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-binaries
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/macos_darwin_*/
+
+      - name: Upload Windows binaries for MSI build
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/windows_windows_*/
+
+  # Build macOS PKG installer
+  macos-pkg:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download macOS binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-binaries
+          path: dist/
+
+      - name: Build PKG installer
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          chmod +x script/pkgmacos
+          script/pkgmacos "$TAG_NAME"
+
+      - name: Upload PKG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-pkg
+          if-no-files-found: error
+          retention-days: 7
+          path: dist/*.pkg
+
+  # Build Windows MSI installer
+  windows-msi:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binaries
+          path: dist/
+
+      - name: Set up MSBuild
+        id: setupmsbuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build MSI installers
+        shell: bash
+        env:
+          MSBUILD_PATH: ${{ steps.setupmsbuild.outputs.msbuildPath }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          MSI_VERSION="${TAG_NAME#v}"
+
+          # Build for each architecture
+          for arch_dir in dist/windows_windows_*; do
+            case "$arch_dir" in
+              *_386 )
+                platform="x86"
+                arch_suffix="386"
+                ;;
+              *_amd64_v1 )
+                platform="x64"
+                arch_suffix="amd64"
+                ;;
+              *_arm64 )
+                platform="arm64"
+                arch_suffix="arm64"
+                ;;
+              * )
+                echo "Skipping unknown architecture: $arch_dir"
+                continue
+                ;;
+            esac
+
+            MSI_NAME="bb_${MSI_VERSION}_windows_${arch_suffix}"
+            echo "Building MSI for $platform: $MSI_NAME"
+
+            "${MSBUILD_PATH}/MSBuild.exe" ./build/windows/bb.wixproj \
+              -p:SourceDir="$PWD/$arch_dir" \
+              -p:OutputPath="$PWD/dist" \
+              -p:OutputName="$MSI_NAME" \
+              -p:ProductVersion="$MSI_VERSION" \
+              -p:Platform="$platform"
+          done
+
+      - name: Upload MSI installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msi
+          if-no-files-found: error
+          retention-days: 7
+          path: dist/*.msi
+
+  # Create the GitHub release with all artifacts
+  release:
+    needs: [build, macos-pkg, windows-msi]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+
+          # Copy main dist artifacts
+          cp artifacts/dist/*.tar.gz release/ 2>/dev/null || true
+          cp artifacts/dist/*.zip release/ 2>/dev/null || true
+          cp artifacts/dist/*.deb release/ 2>/dev/null || true
+          cp artifacts/dist/*.rpm release/ 2>/dev/null || true
+
+          # Copy macOS PKG
+          cp artifacts/macos-pkg/*.pkg release/ 2>/dev/null || true
+
+          # Copy Windows MSI
+          cp artifacts/windows-msi/*.msi release/ 2>/dev/null || true
+
+          # Generate checksums for all files
+          cd release
+          shasum -a 256 * > checksums.txt
+
+          echo "Release assets:"
+          ls -la
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          # Determine if prerelease
+          PRERELEASE_FLAG=""
+          if [[ "$TAG_NAME" == *"-"* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          # Create release
+          gh release create "$TAG_NAME" \
+            --title "Bitbucket CLI ${TAG_NAME#v}" \
+            --generate-notes \
+            $PRERELEASE_FLAG \
+            release/*

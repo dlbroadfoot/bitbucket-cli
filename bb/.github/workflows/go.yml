@@ -1,0 +1,44 @@
+name: Unit and Integration Tests
+on:
+  push:
+    branches:
+      - trunk
+      - main
+    paths:
+      - 'bb/**'
+  pull_request:
+    paths:
+      - 'bb/**'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: bb
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: "bb/go.mod"
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run unit and integration tests
+        run: go test -race -tags=integration ./...
+
+      - name: Build
+        run: go build -v ./cmd/bb

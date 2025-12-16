@@ -1,0 +1,111 @@
+# GoReleaser configuration for Bitbucket CLI
+# Run: goreleaser release --clean
+# Test: goreleaser release --snapshot --clean
+
+version: 2
+project_name: bb
+
+release:
+  prerelease: auto
+  draft: true
+  name_template: "Bitbucket CLI {{.Version}}"
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: macos
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    binary: bb
+    main: ./cmd/bb
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version={{.Version}} -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date={{time "2006-01-02"}}
+
+  - id: linux
+    goos: [linux]
+    goarch: [386, arm, amd64, arm64]
+    env:
+      - CGO_ENABLED=0
+    binary: bb
+    main: ./cmd/bb
+    ldflags:
+      - -s -w -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version={{.Version}} -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date={{time "2006-01-02"}}
+
+  - id: windows
+    goos: [windows]
+    goarch: [386, amd64, arm64]
+    binary: bb
+    main: ./cmd/bb
+    ldflags:
+      - -s -w -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version={{.Version}} -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date={{time "2006-01-02"}}
+
+archives:
+  - id: linux-archive
+    builds: [linux]
+    name_template: "bb_{{ .Version }}_linux_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: true
+    format: tar.gz
+    files:
+      - LICENSE
+      - README.md
+  - id: macos-archive
+    builds: [macos]
+    name_template: "bb_{{ .Version }}_macOS_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: true
+    format: zip
+    files:
+      - LICENSE
+      - README.md
+  - id: windows-archive
+    builds: [windows]
+    name_template: "bb_{{ .Version }}_windows_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: false
+    format: zip
+    files:
+      - LICENSE
+      - README.md
+
+nfpms:
+  - license: MIT
+    maintainer: dlbroadfoot
+    homepage: https://github.com/dlbroadfoot/bitbucket-cli
+    bindir: /usr/bin
+    dependencies:
+      - git
+    description: Work seamlessly with Bitbucket from the command line.
+    formats:
+      - deb
+      - rpm
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+# Homebrew tap - auto-updates formula on release
+brews:
+  - name: bb
+    repository:
+      owner: dlbroadfoot
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/dlbroadfoot/bitbucket-cli"
+    description: "Bitbucket CLI - Work seamlessly with Bitbucket from the command line"
+    license: "MIT"
+    install: |
+      bin.install "bb"
+    test: |
+      system "#{bin}/bb", "--version"

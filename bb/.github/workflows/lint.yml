@@ -1,0 +1,71 @@
+name: Lint
+on:
+  push:
+    branches:
+      - trunk
+      - main
+    paths:
+      - "bb/**.go"
+      - "bb/go.mod"
+      - "bb/go.sum"
+  pull_request:
+    paths:
+      - "bb/**.go"
+      - "bb/go.mod"
+      - "bb/go.sum"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: bb
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'bb/go.mod'
+
+      - name: Ensure go.mod and go.sum are up to date
+        run: |
+          STATUS=0
+          assert-nothing-changed() {
+            local diff
+            "$@" >/dev/null || return 1
+            if ! diff="$(git diff -U1 --color --exit-code)"; then
+              printf '\e[31mError: running `\e[1m%s\e[22m` results in modifications that you must check into version control:\e[0m\n%s\n\n' "$*" "$diff" >&2
+              git checkout -- .
+              STATUS=1
+            fi
+          }
+          assert-nothing-changed go mod tidy
+          exit $STATUS
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # v9.1.0
+        with:
+          version: v2.6.0
+          working-directory: bb
+
+  # Discover vulnerabilities within Go standard libraries used to build Bitbucket CLI using govulncheck.
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'bb/go.mod'
+
+      - name: Check Go vulnerabilities
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@d1f380186385b4f64e00313f31743df8e4b89a77 ./...

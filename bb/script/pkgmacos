@@ -1,0 +1,144 @@
+#!/bin/zsh
+set -e
+
+print_help() {
+    cat <<EOF
+To build a universal pkg for macOS:
+  script/pkgmacos <tag-name>
+
+To build and sign set APPLE_DEVELOPER_INSTALLER_ID environment variable before.
+For example, if you have a signing identity with the identifier 
+"Developer ID Installer: Your Name (ABC123DEF)" set it in the variable.
+EOF
+}
+
+if [ $# -eq 0 ]; then
+  print_help >&2
+  exit 1
+fi
+
+tag_name=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+  -h | --help )
+    print_help
+    exit 0
+    ;;
+  -* )
+    printf "unrecognized flag: %s\n" "$1" >&2
+    exit 1
+    ;;
+  * )
+    tag_name="${1#v}"
+    shift 1
+    ;;
+  esac
+done
+
+# check os requirements: is running macOS 12+ and pkgbuild + productbuild are available
+os_version=$(sw_vers -productVersion)
+major_version=${os_version%%.*}
+
+if (( major_version < 12 )); then
+  echo "This script requires macOS 12 or later. You are running macOS ${os_version}." >&2
+  exit 1
+fi
+
+if ! command -v pkgbuild &> /dev/null; then
+  echo "pkgbuild could not be found. Please install Xcode Command Line Tools." >&2
+  exit 1
+fi
+
+if ! command -v productbuild &> /dev/null; then
+  echo "productbuild could not be found. Please install Xcode Command Line Tools." >&2
+  exit 1
+fi
+# end of os requirements check
+
+# bb-binary paths - find directories dynamically (GoReleaser adds version suffixes)
+find_binary() {
+  local pattern="$1"
+  local dir=$(find ./dist -maxdepth 1 -type d -name "${pattern}*" | head -1)
+  if [ -z "$dir" ]; then
+    echo "Error: No directory matching ${pattern}* found in ./dist" >&2
+    exit 1
+  fi
+  echo "${dir}/bb"
+}
+
+arm64_bin=$(find_binary "macos_darwin_arm64")
+amd64_bin=$(find_binary "macos_darwin_amd64")
+# payload paths
+payload_root="pkg_payload"
+payload_local_bin="${payload_root}/usr/local/bin"
+payload_zsh_site_functions="${payload_root}/usr/local/share/zsh/site-functions"
+payload_man1="${payload_root}/usr/local/share/man/man1"
+
+merge_binaries() {
+    lipo -create -output "${payload_local_bin}/bb" "$arm64_bin" "$amd64_bin"
+}
+
+build_pkg() {
+  # setup payload
+  mkdir -p "${payload_local_bin}"
+  mkdir -p "${payload_man1}"
+  mkdir -p "${payload_zsh_site_functions}"
+
+  # copy man pages if they exist
+  if ls ./share/man/man1/bb*.1 1> /dev/null 2>&1; then
+    for file in ./share/man/man1/bb*.1; do
+      cp "$file" "${payload_man1}"
+    done
+  fi
+
+  # Include only Zsh completions if they exist,
+  # the recommended/only option on macOS since Catalina for default shell.
+  if [ -f "./share/zsh/site-functions/_bb" ]; then
+    cp "./share/zsh/site-functions/_bb" "${payload_zsh_site_functions}"
+  fi
+
+  # merge binaries
+  merge_binaries
+
+  # build pkg
+  pkgbuild \
+    --root "$payload_root" \
+    --identifier "com.bitbucket.cli" \
+    --version "$tag_name" \
+    --install-location "/" \
+    "./dist/com.bitbucket.cli.pkg"
+
+  # setup resources
+  mkdir -p "./build/macOS/resources"
+  cp "LICENSE" "./build/macOS/resources"
+
+  PRODUCTBUILD_ARGS=()
+
+  # include signing if developer id is set
+  if [ -n "$APPLE_DEVELOPER_INSTALLER_ID" ]; then
+    PRODUCTBUILD_ARGS+=("--timestamp")
+    PRODUCTBUILD_ARGS+=("--sign")
+    PRODUCTBUILD_ARGS+=("${APPLE_DEVELOPER_INSTALLER_ID}")
+  else
+    echo "skipping macOS pkg code-signing; APPLE_DEVELOPER_INSTALLER_ID not set" >&2
+  fi
+
+  # build distribution
+  productbuild \
+    --distribution "./build/macOS/distribution.xml" \
+    --resources "./build/macOS/resources" \
+    --package-path "./dist" \
+    "${PRODUCTBUILD_ARGS[@]}" \
+    "./dist/bb_${tag_name}_macOS_universal.pkg"
+}
+
+cleanup() {
+  # remove temp installer so it does not get uploaded
+  rm -f "./dist/com.bitbucket.cli.pkg"
+  rm -rf "$payload_root"
+}
+
+trap cleanup EXIT
+
+build_pkg
