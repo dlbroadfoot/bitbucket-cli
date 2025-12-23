@@ -39,7 +39,7 @@ jobs:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dist
           if-no-files-found: error
@@ -51,7 +51,7 @@ jobs:
             bb/dist/*.rpm
 
       - name: Upload macOS binaries for PKG build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: macos-binaries
           if-no-files-found: error
@@ -60,7 +60,7 @@ jobs:
             bb/dist/macos_darwin_*/
 
       - name: Upload Windows binaries for MSI build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-binaries
           if-no-files-found: error
@@ -104,7 +104,7 @@ jobs:
           script/pkgmacos "$TAG_NAME"
 
       - name: Upload PKG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: macos-pkg
           if-no-files-found: error
@@ -189,7 +189,7 @@ jobs:
           done
 
       - name: Upload MSI installers
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-msi
           if-no-files-found: error
