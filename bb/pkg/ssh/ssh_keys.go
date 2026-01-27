@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/cli/safeexec"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/run"
-	"github.com/cli/safeexec"
 )
 
 type Context struct {

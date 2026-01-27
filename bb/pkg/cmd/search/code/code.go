@@ -83,14 +83,14 @@ type CodeSearchResult struct {
 
 // CodeSearchResults represents a paginated list of code search results
 type CodeSearchResults struct {
-	Size           int                `json:"size"`
-	Page           int                `json:"page"`
-	PageLen        int                `json:"pagelen"`
-	Next           string             `json:"next"`
-	Previous       string             `json:"previous"`
-	Values         []CodeSearchResult `json:"values"`
-	SearchQuery    string             `json:"search_query"`
-	QuerySubstitution string          `json:"query_substitution"`
+	Size              int                `json:"size"`
+	Page              int                `json:"page"`
+	PageLen           int                `json:"pagelen"`
+	Next              string             `json:"next"`
+	Previous          string             `json:"previous"`
+	Values            []CodeSearchResult `json:"values"`
+	SearchQuery       string             `json:"search_query"`
+	QuerySubstitution string             `json:"query_substitution"`
 }
 
 func codeRun(opts *CodeOptions) error {

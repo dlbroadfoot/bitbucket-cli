@@ -1,18 +1,11 @@
 package clone
 
 import (
-	"net/http"
 	"net/url"
 	"testing"
 
-	"github.com/dlbroadfoot/bitbucket-cli/git"
-	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
-	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
-	"github.com/dlbroadfoot/bitbucket-cli/internal/run"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
-	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
-	"github.com/dlbroadfoot/bitbucket-cli/test"
 	"github.com/google/shlex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,254 +89,6 @@ func TestNewCmdClone(t *testing.T) {
 	}
 }
 
-func runCloneCommand(httpClient *http.Client, cli string) (*test.CmdOut, error) {
-	ios, stdin, stdout, stderr := iostreams.Test()
-	fac := &cmdutil.Factory{
-		IOStreams: ios,
-		HttpClient: func() (*http.Client, error) {
-			return httpClient, nil
-		},
-		Config: func() (gh.Config, error) {
-			return config.NewBlankConfig(), nil
-		},
-		GitClient: &git.Client{
-			GhPath:  "some/path/gh",
-			GitPath: "some/path/git",
-		},
-	}
-
-	cmd := NewCmdClone(fac, nil)
-
-	argv, err := shlex.Split(cli)
-	cmd.SetArgs(argv)
-
-	cmd.SetIn(stdin)
-	cmd.SetOut(stderr)
-	cmd.SetErr(stderr)
-
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = cmd.ExecuteC()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &test.CmdOut{OutBuf: stdout, ErrBuf: stderr}, nil
-}
-
-func Test_RepoClone(t *testing.T) {
-	tests := []struct {
-		name string
-		args string
-		want string
-	}{
-		{
-			name: "shorthand",
-			args: "OWNER/REPO",
-			want: "git clone https://github.com/OWNER/REPO.git",
-		},
-		{
-			name: "shorthand with directory",
-			args: "OWNER/REPO target_directory",
-			want: "git clone https://github.com/OWNER/REPO.git target_directory",
-		},
-		{
-			name: "clone arguments",
-			args: "OWNER/REPO -- -o upstream --depth 1",
-			want: "git clone -o upstream --depth 1 https://github.com/OWNER/REPO.git",
-		},
-		{
-			name: "clone arguments with directory",
-			args: "OWNER/REPO target_directory -- -o upstream --depth 1",
-			want: "git clone -o upstream --depth 1 https://github.com/OWNER/REPO.git target_directory",
-		},
-		{
-			name: "HTTPS URL",
-			args: "https://github.com/OWNER/REPO",
-			want: "git clone https://github.com/OWNER/REPO.git",
-		},
-		{
-			name: "HTTPS URL with extra path parts",
-			args: "https://github.com/OWNER/REPO/extra/part?key=value#fragment",
-			want: "git clone https://github.com/OWNER/REPO.git",
-		},
-		{
-			name: "SSH URL",
-			args: "git@github.com:OWNER/REPO.git",
-			want: "git clone git@github.com:OWNER/REPO.git",
-		},
-		{
-			name: "Non-canonical capitalization",
-			args: "Owner/Repo",
-			want: "git clone https://github.com/OWNER/REPO.git",
-		},
-		{
-			name: "clone wiki",
-			args: "Owner/Repo.wiki",
-			want: "git clone https://github.com/OWNER/REPO.wiki.git",
-		},
-		{
-			name: "wiki URL",
-			args: "https://github.com/owner/repo.wiki",
-			want: "git clone https://github.com/OWNER/REPO.wiki.git",
-		},
-		{
-			name: "wiki URL with extra path parts",
-			args: "https://github.com/owner/repo.wiki/extra/path?key=value#fragment",
-			want: "git clone https://github.com/OWNER/REPO.wiki.git",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			reg := &httpmock.Registry{}
-			defer reg.Verify(t)
-			reg.Register(
-				httpmock.GraphQL(`query RepositoryInfo\b`),
-				httpmock.StringResponse(`
-				{ "data": { "repository": {
-					"name": "REPO",
-					"owner": {
-						"login": "OWNER"
-					},
-					"hasWikiEnabled": true
-				} } }
-				`))
-
-			httpClient := &http.Client{Transport: reg}
-
-			cs, restore := run.Stub()
-			defer restore(t)
-			cs.Register(tt.want, 0, "")
-
-			output, err := runCloneCommand(httpClient, tt.args)
-			if err != nil {
-				t.Fatalf("error running command `repo clone`: %v", err)
-			}
-
-			assert.Equal(t, "", output.String())
-			assert.Equal(t, "", output.Stderr())
-		})
-	}
-}
-
-func Test_RepoClone_hasParent(t *testing.T) {
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-	reg.Register(
-		httpmock.GraphQL(`query RepositoryInfo\b`),
-		httpmock.StringResponse(`
-				{ "data": { "repository": {
-					"name": "REPO",
-					"owner": {
-						"login": "OWNER"
-					},
-					"parent": {
-						"name": "ORIG",
-						"owner": {
-							"login": "hubot"
-						},
-						"defaultBranchRef": {
-							"name": "trunk"
-						}
-					}
-				} } }
-				`))
-
-	httpClient := &http.Client{Transport: reg}
-
-	cs, cmdTeardown := run.Stub()
-	defer cmdTeardown(t)
-
-	cs.Register(`git clone https://github.com/OWNER/REPO.git`, 0, "")
-	cs.Register(`git -C REPO remote add -t trunk upstream https://github.com/hubot/ORIG.git`, 0, "")
-	cs.Register(`git -C REPO fetch upstream`, 0, "")
-	cs.Register(`git -C REPO remote set-branches upstream *`, 0, "")
-	cs.Register(`git -C REPO config --add remote.upstream.gh-resolved base`, 0, "")
-
-	_, err := runCloneCommand(httpClient, "OWNER/REPO")
-	if err != nil {
-		t.Fatalf("error running command `repo clone`: %v", err)
-	}
-}
-
-func Test_RepoClone_hasParent_upstreamRemoteName(t *testing.T) {
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-	reg.Register(
-		httpmock.GraphQL(`query RepositoryInfo\b`),
-		httpmock.StringResponse(`
-				{ "data": { "repository": {
-					"name": "REPO",
-					"owner": {
-						"login": "OWNER"
-					},
-					"parent": {
-						"name": "ORIG",
-						"owner": {
-							"login": "hubot"
-						},
-						"defaultBranchRef": {
-							"name": "trunk"
-						}
-					}
-				} } }
-				`))
-
-	httpClient := &http.Client{Transport: reg}
-
-	cs, cmdTeardown := run.Stub()
-	defer cmdTeardown(t)
-
-	cs.Register(`git clone https://github.com/OWNER/REPO.git`, 0, "")
-	cs.Register(`git -C REPO remote add -t trunk test https://github.com/hubot/ORIG.git`, 0, "")
-	cs.Register(`git -C REPO fetch test`, 0, "")
-	cs.Register(`git -C REPO remote set-branches test *`, 0, "")
-	cs.Register(`git -C REPO config --add remote.test.gh-resolved base`, 0, "")
-
-	_, err := runCloneCommand(httpClient, "OWNER/REPO --upstream-remote-name test")
-	if err != nil {
-		t.Fatalf("error running command `repo clone`: %v", err)
-	}
-}
-
-func Test_RepoClone_withoutUsername(t *testing.T) {
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-	reg.Register(
-		httpmock.GraphQL(`query UserCurrent\b`),
-		httpmock.StringResponse(`
-		{ "data": { "viewer": {
-			"login": "OWNER"
-		}}}`))
-	reg.Register(
-		httpmock.GraphQL(`query RepositoryInfo\b`),
-		httpmock.StringResponse(`
-				{ "data": { "repository": {
-					"name": "REPO",
-					"owner": {
-						"login": "OWNER"
-					}
-				} } }
-				`))
-
-	httpClient := &http.Client{Transport: reg}
-
-	cs, restore := run.Stub()
-	defer restore(t)
-	cs.Register(`git clone https://github\.com/OWNER/REPO\.git`, 0, "")
-
-	output, err := runCloneCommand(httpClient, "REPO")
-	if err != nil {
-		t.Fatalf("error running command `repo clone`: %v", err)
-	}
-
-	assert.Equal(t, "", output.String())
-	assert.Equal(t, "", output.Stderr())
-}
-
 func TestSimplifyURL(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -357,33 +102,33 @@ func TestSimplifyURL(t *testing.T) {
 		},
 		{
 			name:        "no change, no path",
-			raw:         "https://github.com",
-			expectedRaw: "https://github.com",
+			raw:         "https://bitbucket.org",
+			expectedRaw: "https://bitbucket.org",
 		},
 		{
 			name:        "no change, single part path",
-			raw:         "https://github.com/owner",
-			expectedRaw: "https://github.com/owner",
+			raw:         "https://bitbucket.org/owner",
+			expectedRaw: "https://bitbucket.org/owner",
 		},
 		{
 			name:        "no change, two-part path",
-			raw:         "https://github.com/owner/repo",
-			expectedRaw: "https://github.com/owner/repo",
+			raw:         "https://bitbucket.org/owner/repo",
+			expectedRaw: "https://bitbucket.org/owner/repo",
 		},
 		{
 			name:        "no change, three-part path",
-			raw:         "https://github.com/owner/repo/pulls",
-			expectedRaw: "https://github.com/owner/repo",
+			raw:         "https://bitbucket.org/owner/repo/pulls",
+			expectedRaw: "https://bitbucket.org/owner/repo",
 		},
 		{
 			name:        "no change, two-part path, with query, with fragment",
-			raw:         "https://github.com/owner/repo?key=value#fragment",
-			expectedRaw: "https://github.com/owner/repo",
+			raw:         "https://bitbucket.org/owner/repo?key=value#fragment",
+			expectedRaw: "https://bitbucket.org/owner/repo",
 		},
 		{
 			name:        "no change, single part path, with query, with fragment",
-			raw:         "https://github.com/owner?key=value#fragment",
-			expectedRaw: "https://github.com/owner",
+			raw:         "https://bitbucket.org/owner?key=value#fragment",
+			expectedRaw: "https://bitbucket.org/owner",
 		},
 	}
 

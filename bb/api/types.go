@@ -53,27 +53,27 @@ type Project struct {
 
 // Repository represents a Bitbucket repository.
 type Repository struct {
-	UUID        string     `json:"uuid"`
-	Name        string     `json:"name"`
-	Slug        string     `json:"slug"`
-	FullName    string     `json:"full_name"` // workspace/repo_slug
-	Description string     `json:"description"`
-	IsPrivate   bool       `json:"is_private"`
-	ForkPolicy  string     `json:"fork_policy"` // "allow_forks", "no_public_forks", "no_forks"
-	Language    string     `json:"language"`
-	Type        string     `json:"type"` // "repository"
-	Project     *Project   `json:"project,omitempty"`
-	Workspace   Workspace  `json:"workspace"`
-	Owner       User       `json:"owner"`
-	MainBranch  *Branch    `json:"mainbranch,omitempty"`
+	UUID        string      `json:"uuid"`
+	Name        string      `json:"name"`
+	Slug        string      `json:"slug"`
+	FullName    string      `json:"full_name"` // workspace/repo_slug
+	Description string      `json:"description"`
+	IsPrivate   bool        `json:"is_private"`
+	ForkPolicy  string      `json:"fork_policy"` // "allow_forks", "no_public_forks", "no_forks"
+	Language    string      `json:"language"`
+	Type        string      `json:"type"` // "repository"
+	Project     *Project    `json:"project,omitempty"`
+	Workspace   Workspace   `json:"workspace"`
+	Owner       User        `json:"owner"`
+	MainBranch  *Branch     `json:"mainbranch,omitempty"`
 	Parent      *Repository `json:"parent,omitempty"` // For forks
-	Links       Links      `json:"links"`
-	Size        int64      `json:"size"`
-	CreatedOn   time.Time  `json:"created_on"`
-	UpdatedOn   time.Time  `json:"updated_on"`
-	SCM         string     `json:"scm"` // "git" or "hg"
-	HasIssues   bool       `json:"has_issues"`
-	HasWiki     bool       `json:"has_wiki"`
+	Links       Links       `json:"links"`
+	Size        int64       `json:"size"`
+	CreatedOn   time.Time   `json:"created_on"`
+	UpdatedOn   time.Time   `json:"updated_on"`
+	SCM         string      `json:"scm"` // "git" or "hg"
+	HasIssues   bool        `json:"has_issues"`
+	HasWiki     bool        `json:"has_wiki"`
 }
 
 // Branch represents a git branch.
@@ -86,14 +86,14 @@ type Branch struct {
 
 // Commit represents a git commit.
 type Commit struct {
-	Hash       string    `json:"hash"`
-	Type       string    `json:"type"` // "commit"
-	Message    string    `json:"message"`
-	Author     Author    `json:"author"`
-	Date       time.Time `json:"date"`
-	Parents    []Commit  `json:"parents,omitempty"`
+	Hash       string      `json:"hash"`
+	Type       string      `json:"type"` // "commit"
+	Message    string      `json:"message"`
+	Author     Author      `json:"author"`
+	Date       time.Time   `json:"date"`
+	Parents    []Commit    `json:"parents,omitempty"`
 	Repository *Repository `json:"repository,omitempty"`
-	Links      Links     `json:"links"`
+	Links      Links       `json:"links"`
 }
 
 // Author represents a commit author (may or may not be linked to a user).
@@ -104,25 +104,25 @@ type Author struct {
 
 // PullRequest represents a Bitbucket pull request.
 type PullRequest struct {
-	ID                int             `json:"id"`
-	Title             string          `json:"title"`
-	Description       string          `json:"description"`
+	ID                int              `json:"id"`
+	Title             string           `json:"title"`
+	Description       string           `json:"description"`
 	State             PullRequestState `json:"state"`
-	Type              string          `json:"type"` // "pullrequest"
-	Author            User            `json:"author"`
-	Source            PullRequestRef  `json:"source"`
-	Destination       PullRequestRef  `json:"destination"`
-	MergeCommit       *Commit         `json:"merge_commit,omitempty"`
-	CloseSourceBranch bool            `json:"close_source_branch"`
-	ClosedBy          *User           `json:"closed_by,omitempty"`
-	Reason            string          `json:"reason,omitempty"` // Decline reason
-	CreatedOn         time.Time       `json:"created_on"`
-	UpdatedOn         time.Time       `json:"updated_on"`
-	Links             Links           `json:"links"`
-	CommentCount      int             `json:"comment_count"`
-	TaskCount         int             `json:"task_count"`
-	Reviewers         []User          `json:"reviewers,omitempty"`
-	Participants      []Participant   `json:"participants,omitempty"`
+	Type              string           `json:"type"` // "pullrequest"
+	Author            User             `json:"author"`
+	Source            PullRequestRef   `json:"source"`
+	Destination       PullRequestRef   `json:"destination"`
+	MergeCommit       *Commit          `json:"merge_commit,omitempty"`
+	CloseSourceBranch bool             `json:"close_source_branch"`
+	ClosedBy          *User            `json:"closed_by,omitempty"`
+	Reason            string           `json:"reason,omitempty"` // Decline reason
+	CreatedOn         time.Time        `json:"created_on"`
+	UpdatedOn         time.Time        `json:"updated_on"`
+	Links             Links            `json:"links"`
+	CommentCount      int              `json:"comment_count"`
+	TaskCount         int              `json:"task_count"`
+	Reviewers         []User           `json:"reviewers,omitempty"`
+	Participants      []Participant    `json:"participants,omitempty"`
 }
 
 // PullRequestState represents the state of a pull request.
@@ -144,26 +144,26 @@ type PullRequestRef struct {
 
 // Participant represents a participant in a pull request.
 type Participant struct {
-	User               User   `json:"user"`
-	Role               string `json:"role"`        // "PARTICIPANT", "REVIEWER"
-	Approved           bool   `json:"approved"`
-	State              string `json:"state"`       // "approved", "changes_requested", null
-	ParticipatedOn     time.Time `json:"participated_on"`
+	User           User      `json:"user"`
+	Role           string    `json:"role"` // "PARTICIPANT", "REVIEWER"
+	Approved       bool      `json:"approved"`
+	State          string    `json:"state"` // "approved", "changes_requested", null
+	ParticipatedOn time.Time `json:"participated_on"`
 }
 
 // PullRequestComment represents a comment on a pull request.
 type PullRequestComment struct {
-	ID        int       `json:"id"`
-	Type      string    `json:"type"` // "pullrequest_comment"
-	Content   Content   `json:"content"`
-	User      User      `json:"user"`
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	ID        int                 `json:"id"`
+	Type      string              `json:"type"` // "pullrequest_comment"
+	Content   Content             `json:"content"`
+	User      User                `json:"user"`
+	CreatedOn time.Time           `json:"created_on"`
+	UpdatedOn time.Time           `json:"updated_on"`
 	Parent    *PullRequestComment `json:"parent,omitempty"`
 	Inline    *InlineComment      `json:"inline,omitempty"`
-	Links     Links     `json:"links"`
-	Deleted   bool      `json:"deleted"`
-	Pending   bool      `json:"pending"`
+	Links     Links               `json:"links"`
+	Deleted   bool                `json:"deleted"`
+	Pending   bool                `json:"pending"`
 }
 
 // InlineComment represents an inline comment position.
@@ -182,46 +182,46 @@ type Content struct {
 
 // Issue represents a Bitbucket issue.
 type Issue struct {
-	ID         int       `json:"id"`
-	Title      string    `json:"title"`
-	Content    Content   `json:"content"`
-	State      string    `json:"state"`    // "new", "open", "resolved", "on hold", "invalid", "duplicate", "wontfix", "closed"
-	Priority   string    `json:"priority"` // "trivial", "minor", "major", "critical", "blocker"
-	Kind       string    `json:"kind"`     // "bug", "enhancement", "proposal", "task"
-	Type       string    `json:"type"`     // "issue"
-	Reporter   User      `json:"reporter"`
-	Assignee   *User     `json:"assignee,omitempty"`
+	ID         int        `json:"id"`
+	Title      string     `json:"title"`
+	Content    Content    `json:"content"`
+	State      string     `json:"state"`    // "new", "open", "resolved", "on hold", "invalid", "duplicate", "wontfix", "closed"
+	Priority   string     `json:"priority"` // "trivial", "minor", "major", "critical", "blocker"
+	Kind       string     `json:"kind"`     // "bug", "enhancement", "proposal", "task"
+	Type       string     `json:"type"`     // "issue"
+	Reporter   User       `json:"reporter"`
+	Assignee   *User      `json:"assignee,omitempty"`
 	Component  *Component `json:"component,omitempty"`
 	Milestone  *Milestone `json:"milestone,omitempty"`
 	Version    *Version   `json:"version,omitempty"`
-	Votes      int       `json:"votes"`
-	Watches    int       `json:"watches"`
+	Votes      int        `json:"votes"`
+	Watches    int        `json:"watches"`
 	Repository Repository `json:"repository"`
-	Links      Links     `json:"links"`
-	CreatedOn  time.Time `json:"created_on"`
-	UpdatedOn  time.Time `json:"updated_on"`
+	Links      Links      `json:"links"`
+	CreatedOn  time.Time  `json:"created_on"`
+	UpdatedOn  time.Time  `json:"updated_on"`
 	EditedOn   *time.Time `json:"edited_on,omitempty"`
 }
 
 // Component represents an issue component.
 type Component struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Links Links `json:"links"`
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Links Links  `json:"links"`
 }
 
 // Milestone represents an issue milestone.
 type Milestone struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Links Links `json:"links"`
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Links Links  `json:"links"`
 }
 
 // Version represents an issue version.
 type Version struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Links Links `json:"links"`
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Links Links  `json:"links"`
 }
 
 // IssueComment represents a comment on an issue.
@@ -237,27 +237,27 @@ type IssueComment struct {
 
 // Links represents hypermedia links in API responses.
 type Links struct {
-	Self        *Link `json:"self,omitempty"`
-	HTML        *Link `json:"html,omitempty"`
-	Avatar      *Link `json:"avatar,omitempty"`
-	Clone       []CloneLink `json:"clone,omitempty"`
-	Commits     *Link `json:"commits,omitempty"`
-	Watchers    *Link `json:"watchers,omitempty"`
-	Branches    *Link `json:"branches,omitempty"`
-	Tags        *Link `json:"tags,omitempty"`
-	Forks       *Link `json:"forks,omitempty"`
-	Downloads   *Link `json:"downloads,omitempty"`
-	PullRequests *Link `json:"pullrequests,omitempty"`
-	Issues      *Link `json:"issues,omitempty"`
-	Diff        *Link `json:"diff,omitempty"`
-	DiffStat    *Link `json:"diffstat,omitempty"`
-	Patch       *Link `json:"patch,omitempty"`
-	Comments    *Link `json:"comments,omitempty"`
-	Approve     *Link `json:"approve,omitempty"`
-	Merge       *Link `json:"merge,omitempty"`
-	Decline     *Link `json:"decline,omitempty"`
-	Activity    *Link `json:"activity,omitempty"`
-	Statuses    *Link `json:"statuses,omitempty"`
+	Self         *Link       `json:"self,omitempty"`
+	HTML         *Link       `json:"html,omitempty"`
+	Avatar       *Link       `json:"avatar,omitempty"`
+	Clone        []CloneLink `json:"clone,omitempty"`
+	Commits      *Link       `json:"commits,omitempty"`
+	Watchers     *Link       `json:"watchers,omitempty"`
+	Branches     *Link       `json:"branches,omitempty"`
+	Tags         *Link       `json:"tags,omitempty"`
+	Forks        *Link       `json:"forks,omitempty"`
+	Downloads    *Link       `json:"downloads,omitempty"`
+	PullRequests *Link       `json:"pullrequests,omitempty"`
+	Issues       *Link       `json:"issues,omitempty"`
+	Diff         *Link       `json:"diff,omitempty"`
+	DiffStat     *Link       `json:"diffstat,omitempty"`
+	Patch        *Link       `json:"patch,omitempty"`
+	Comments     *Link       `json:"comments,omitempty"`
+	Approve      *Link       `json:"approve,omitempty"`
+	Merge        *Link       `json:"merge,omitempty"`
+	Decline      *Link       `json:"decline,omitempty"`
+	Activity     *Link       `json:"activity,omitempty"`
+	Statuses     *Link       `json:"statuses,omitempty"`
 }
 
 // Link represents a single hypermedia link.
@@ -276,20 +276,20 @@ type CloneLink struct {
 type ErrorResponse struct {
 	Type  string `json:"type"` // "error"
 	Error struct {
-		Message string `json:"message"`
-		Detail  string `json:"detail,omitempty"`
+		Message string                 `json:"message"`
+		Detail  string                 `json:"detail,omitempty"`
 		Data    map[string]interface{} `json:"data,omitempty"`
 	} `json:"error"`
 }
 
 // CreatePullRequestInput represents the input for creating a pull request.
 type CreatePullRequestInput struct {
-	Title             string `json:"title"`
-	Description       string `json:"description,omitempty"`
-	Source            CreatePullRequestRef `json:"source"`
+	Title             string                `json:"title"`
+	Description       string                `json:"description,omitempty"`
+	Source            CreatePullRequestRef  `json:"source"`
 	Destination       *CreatePullRequestRef `json:"destination,omitempty"` // Optional, defaults to main branch
-	CloseSourceBranch bool   `json:"close_source_branch,omitempty"`
-	Reviewers         []UserRef `json:"reviewers,omitempty"`
+	CloseSourceBranch bool                  `json:"close_source_branch,omitempty"`
+	Reviewers         []UserRef             `json:"reviewers,omitempty"`
 }
 
 // CreatePullRequestRef represents a branch reference for PR creation.
@@ -310,11 +310,11 @@ type UserRef struct {
 
 // CreateIssueInput represents the input for creating an issue.
 type CreateIssueInput struct {
-	Title    string `json:"title"`
+	Title    string        `json:"title"`
 	Content  *ContentInput `json:"content,omitempty"`
-	Kind     string `json:"kind,omitempty"`     // "bug", "enhancement", "proposal", "task"
-	Priority string `json:"priority,omitempty"` // "trivial", "minor", "major", "critical", "blocker"
-	Assignee *UserRef `json:"assignee,omitempty"`
+	Kind     string        `json:"kind,omitempty"`     // "bug", "enhancement", "proposal", "task"
+	Priority string        `json:"priority,omitempty"` // "trivial", "minor", "major", "critical", "blocker"
+	Assignee *UserRef      `json:"assignee,omitempty"`
 }
 
 // ContentInput represents content input for issues/comments.

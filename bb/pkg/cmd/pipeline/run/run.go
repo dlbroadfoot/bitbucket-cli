@@ -18,10 +18,10 @@ type RunOptions struct {
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (bbrepo.Interface, error)
 
-	Branch   string
-	Commit   string
-	Pattern  string
-	Custom   bool
+	Branch    string
+	Commit    string
+	Pattern   string
+	Custom    bool
 	Variables map[string]string
 }
 
@@ -107,10 +107,10 @@ type triggerPayload struct {
 }
 
 type triggerTarget struct {
-	Type     string          `json:"type"`
-	RefType  string          `json:"ref_type,omitempty"`
-	RefName  string          `json:"ref_name,omitempty"`
-	Commit   *triggerCommit  `json:"commit,omitempty"`
+	Type     string           `json:"type"`
+	RefType  string           `json:"ref_type,omitempty"`
+	RefName  string           `json:"ref_name,omitempty"`
+	Commit   *triggerCommit   `json:"commit,omitempty"`
 	Selector *triggerSelector `json:"selector,omitempty"`
 }
 

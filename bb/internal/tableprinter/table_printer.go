@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/text"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
-	"github.com/cli/go-gh/v2/pkg/tableprinter"
 )
 
 type TablePrinter struct {

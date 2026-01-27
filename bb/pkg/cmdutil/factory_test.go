@@ -115,7 +115,7 @@ func Test_executable_relative(t *testing.T) {
 
 func Test_Executable_override(t *testing.T) {
 	override := strings.Join([]string{"C:", "cygwin64", "home", "gh.exe"}, string(os.PathSeparator))
-	t.Setenv("GH_PATH", override)
+	t.Setenv("BB_PATH", override)
 	f := Factory{}
 	if got := f.Executable(); got != override {
 		t.Errorf("executable() = %q, want %q", got, override)

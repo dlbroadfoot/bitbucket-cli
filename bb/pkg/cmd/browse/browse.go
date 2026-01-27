@@ -16,9 +16,9 @@ import (
 )
 
 type BrowseOptions struct {
-	BaseRepo  func() (bbrepo.Interface, error)
-	Browser   browser.Browser
-	IO        *iostreams.IOStreams
+	BaseRepo func() (bbrepo.Interface, error)
+	Browser  browser.Browser
+	IO       *iostreams.IOStreams
 
 	SelectorArg   string
 	Branch        string

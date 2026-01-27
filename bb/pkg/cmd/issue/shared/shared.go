@@ -14,9 +14,9 @@ type Issue struct {
 	ID        int      `json:"id"`
 	Title     string   `json:"title"`
 	Content   *Content `json:"content,omitempty"`
-	State     string   `json:"state"` // new, open, resolved, on hold, invalid, duplicate, wontfix, closed
+	State     string   `json:"state"`    // new, open, resolved, on hold, invalid, duplicate, wontfix, closed
 	Priority  string   `json:"priority"` // trivial, minor, major, critical, blocker
-	Kind      string   `json:"kind"` // bug, enhancement, proposal, task
+	Kind      string   `json:"kind"`     // bug, enhancement, proposal, task
 	Reporter  User     `json:"reporter"`
 	Assignee  *User    `json:"assignee,omitempty"`
 	CreatedOn string   `json:"created_on"`

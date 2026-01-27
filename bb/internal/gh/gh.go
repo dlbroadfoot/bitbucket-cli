@@ -10,8 +10,8 @@
 package gh
 
 import (
-	o "github.com/dlbroadfoot/bitbucket-cli/pkg/option"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
+	o "github.com/dlbroadfoot/bitbucket-cli/pkg/option"
 )
 
 type ConfigSource string

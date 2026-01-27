@@ -4,8 +4,8 @@
 package ghmock
 
 import (
-	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	"sync"
 )
 

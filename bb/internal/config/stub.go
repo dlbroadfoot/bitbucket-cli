@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	ghmock "github.com/dlbroadfoot/bitbucket-cli/internal/gh/mock"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/keyring"
 	o "github.com/dlbroadfoot/bitbucket-cli/pkg/option"
-	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 )
 
 func NewBlankConfig() *ghmock.ConfigMock {

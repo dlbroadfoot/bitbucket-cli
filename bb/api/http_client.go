@@ -56,10 +56,10 @@ func NewHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 
 	if (opts.LogVerboseHTTP || debugEnabled) && opts.Log != nil {
 		transport = &loggingTripper{
-			base:       transport,
-			log:        opts.Log,
-			colorize:   opts.LogColorize,
-			verbose:    opts.LogVerboseHTTP,
+			base:     transport,
+			log:      opts.Log,
+			colorize: opts.LogColorize,
+			verbose:  opts.LogVerboseHTTP,
 		}
 	}
 

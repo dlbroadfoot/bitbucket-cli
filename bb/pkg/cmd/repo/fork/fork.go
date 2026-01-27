@@ -23,10 +23,10 @@ type ForkOptions struct {
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (bbrepo.Interface, error)
 
-	Repository  string
-	Workspace   string
-	Name        string
-	Clone       bool
+	Repository string
+	Workspace  string
+	Name       string
+	Clone      bool
 }
 
 func NewCmdFork(f *cmdutil.Factory, runF func(*ForkOptions) error) *cobra.Command {

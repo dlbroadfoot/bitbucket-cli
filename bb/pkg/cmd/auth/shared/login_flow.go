@@ -19,15 +19,15 @@ type iconfig interface {
 }
 
 type LoginOptions struct {
-	IO              *iostreams.IOStreams
-	Config          iconfig
-	HTTPClient      *http.Client
-	Hostname        string
-	Interactive     bool
-	GitProtocol     string
-	Prompter        Prompt
-	CredentialFlow  *GitCredentialFlow
-	SecureStorage   bool
+	IO             *iostreams.IOStreams
+	Config         iconfig
+	HTTPClient     *http.Client
+	Hostname       string
+	Interactive    bool
+	GitProtocol    string
+	Prompter       Prompt
+	CredentialFlow *GitCredentialFlow
+	SecureStorage  bool
 }
 
 // Login performs the Bitbucket login flow using App Passwords.

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	ghmock "github.com/dlbroadfoot/bitbucket-cli/internal/gh/mock"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
+	ghmock "github.com/dlbroadfoot/bitbucket-cli/internal/gh/mock"
 	"github.com/stretchr/testify/require"
 )
 

@@ -30,10 +30,10 @@ type PullRequestFeatures struct {
 // RepositoryFeatures represents features available for repositories.
 type RepositoryFeatures struct {
 	// Bitbucket Cloud supports these features
-	AutoMerge            bool
-	VisibilityField      bool
+	AutoMerge             bool
+	VisibilityField       bool
 	IssueTemplateMutation bool
-	IssueTemplateQuery   bool
+	IssueTemplateQuery    bool
 }
 
 // NewDetector creates a new feature detector for Bitbucket.
@@ -61,9 +61,9 @@ func (d *detector) PullRequestFeatures() (PullRequestFeatures, error) {
 func (d *detector) RepositoryFeatures() (RepositoryFeatures, error) {
 	// Bitbucket Cloud features
 	return RepositoryFeatures{
-		AutoMerge:            true,  // Bitbucket supports auto-merge
-		VisibilityField:      true,  // Bitbucket has visibility settings
+		AutoMerge:             true, // Bitbucket supports auto-merge
+		VisibilityField:       true, // Bitbucket has visibility settings
 		IssueTemplateMutation: false,
-		IssueTemplateQuery:   false,
+		IssueTemplateQuery:    false,
 	}, nil
 }

@@ -7,10 +7,10 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/charmbracelet/huh"
+	ghPrompter "github.com/cli/go-gh/v2/pkg/prompter"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/surveyext"
-	ghPrompter "github.com/cli/go-gh/v2/pkg/prompter"
 )
 
 //go:generate moq -rm -out prompter_mock.go . Prompter

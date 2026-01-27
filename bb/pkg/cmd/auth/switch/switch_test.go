@@ -399,7 +399,7 @@ func TestSwitchRun(t *testing.T) {
 					require.NoError(t, err)
 
 					if user.name == userWithMissingToken {
-						require.NoError(t, keyring.Delete(fmt.Sprintf("gh:%s", hostUsers.host), userWithMissingToken))
+						require.NoError(t, keyring.Delete(fmt.Sprintf("bb:%s", hostUsers.host), userWithMissingToken))
 					}
 				}
 			}

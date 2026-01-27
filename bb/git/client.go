@@ -16,8 +16,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 	"github.com/cli/safeexec"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 )
 
 // MergeBaseConfig is the configuration setting to keep track of the PR target branch.

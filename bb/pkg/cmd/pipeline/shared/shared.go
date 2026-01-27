@@ -19,11 +19,11 @@ type Pipeline struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
 	} `json:"trigger,omitempty"`
-	State       *State  `json:"state,omitempty"`
-	CreatedOn   string  `json:"created_on"`
-	CompletedOn string  `json:"completed_on,omitempty"`
-	DurationIn  int     `json:"duration_in_seconds,omitempty"`
-	Links       Links   `json:"links"`
+	State       *State `json:"state,omitempty"`
+	CreatedOn   string `json:"created_on"`
+	CompletedOn string `json:"completed_on,omitempty"`
+	DurationIn  int    `json:"duration_in_seconds,omitempty"`
+	Links       Links  `json:"links"`
 }
 
 type User struct {
@@ -42,9 +42,9 @@ type Repo struct {
 }
 
 type Target struct {
-	Type     string  `json:"type"`
-	RefType  string  `json:"ref_type,omitempty"`
-	RefName  string  `json:"ref_name,omitempty"`
+	Type     string `json:"type"`
+	RefType  string `json:"ref_type,omitempty"`
+	RefName  string `json:"ref_name,omitempty"`
 	Selector *struct {
 		Type    string `json:"type"`
 		Pattern string `json:"pattern"`
@@ -96,13 +96,13 @@ type PipelineList struct {
 
 // Step represents a pipeline step
 type Step struct {
-	UUID       string `json:"uuid"`
-	Name       string `json:"name"`
-	State      *State `json:"state,omitempty"`
-	StartedOn  string `json:"started_on,omitempty"`
+	UUID        string `json:"uuid"`
+	Name        string `json:"name"`
+	State       *State `json:"state,omitempty"`
+	StartedOn   string `json:"started_on,omitempty"`
 	CompletedOn string `json:"completed_on,omitempty"`
-	DurationIn int    `json:"duration_in_seconds,omitempty"`
-	Image      *struct {
+	DurationIn  int    `json:"duration_in_seconds,omitempty"`
+	Image       *struct {
 		Name string `json:"name"`
 	} `json:"image,omitempty"`
 	ScriptCommands []struct {

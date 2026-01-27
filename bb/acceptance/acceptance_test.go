@@ -13,8 +13,8 @@ import (
 
 	"math/rand"
 
-	"github.com/dlbroadfoot/bitbucket-cli/internal/ghcmd"
 	"github.com/cli/go-internal/testscript"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghcmd"
 )
 
 func ghMain() int {

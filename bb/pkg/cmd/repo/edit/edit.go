@@ -154,14 +154,14 @@ func editRun(opts *EditOptions) error {
 }
 
 type repoUpdatePayload struct {
-	Name        string       `json:"name,omitempty"`
-	Description string       `json:"description,omitempty"`
-	Website     string       `json:"website,omitempty"`
-	Language    string       `json:"language,omitempty"`
-	IsPrivate   *bool        `json:"is_private,omitempty"`
-	ForkPolicy  string       `json:"fork_policy,omitempty"`
-	MainBranch  *mainBranch  `json:"mainbranch,omitempty"`
-	Project     *projectRef  `json:"project,omitempty"`
+	Name        string      `json:"name,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Website     string      `json:"website,omitempty"`
+	Language    string      `json:"language,omitempty"`
+	IsPrivate   *bool       `json:"is_private,omitempty"`
+	ForkPolicy  string      `json:"fork_policy,omitempty"`
+	MainBranch  *mainBranch `json:"mainbranch,omitempty"`
+	Project     *projectRef `json:"project,omitempty"`
 }
 
 type mainBranch struct {

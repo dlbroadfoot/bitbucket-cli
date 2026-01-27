@@ -24,9 +24,9 @@ type Factory struct {
 	IOStreams *iostreams.IOStreams
 	Prompter  prompter.Prompter
 
-	BaseRepo func() (bbrepo.Interface, error)
-	Branch   func() (string, error)
-	Config   func() (gh.Config, error)
+	BaseRepo   func() (bbrepo.Interface, error)
+	Branch     func() (string, error)
+	Config     func() (gh.Config, error)
 	HttpClient func() (*http.Client, error)
 	// PlainHttpClient is a special HTTP client that does not automatically set
 	// auth and other headers. This is meant to be used in situations where the

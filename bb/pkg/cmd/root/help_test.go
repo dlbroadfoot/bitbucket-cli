@@ -8,7 +8,7 @@ import (
 	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
-"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
+	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	"github.com/yuin/goldmark"

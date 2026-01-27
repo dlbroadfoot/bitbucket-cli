@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cli/go-gh/v2/pkg/jq"
+	"github.com/cli/go-gh/v2/pkg/template"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/jsoncolor"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/set"
-	"github.com/cli/go-gh/v2/pkg/jq"
-	"github.com/cli/go-gh/v2/pkg/template"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

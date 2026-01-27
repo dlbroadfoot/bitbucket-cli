@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dlbroadfoot/bitbucket-cli/internal/keyring"
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/cli/go-gh/v2/pkg/config"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/keyring"
 )
 
 var noTokenError = errors.New("no token found")

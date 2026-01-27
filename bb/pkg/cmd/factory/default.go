@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	xcolor "github.com/cli/go-gh/v2/pkg/x/color"
 	"github.com/dlbroadfoot/bitbucket-cli/api"
 	bbContext "github.com/dlbroadfoot/bitbucket-cli/context"
 	"github.com/dlbroadfoot/bitbucket-cli/git"
@@ -18,7 +19,6 @@ import (
 	"github.com/dlbroadfoot/bitbucket-cli/internal/prompter"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
-	xcolor "github.com/cli/go-gh/v2/pkg/x/color"
 )
 
 func New(appVersion string) *cmdutil.Factory {

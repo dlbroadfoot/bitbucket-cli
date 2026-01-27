@@ -32,7 +32,7 @@ func Test_remoteResolver(t *testing.T) {
 			name: "no authenticated hosts",
 			remotes: func() (git.RemoteSet, error) {
 				return git.RemoteSet{
-					git.NewRemote("origin", "https://github.com/owner/repo.git"),
+					git.NewRemote("origin", "https://bitbucket.org/owner/repo.git"),
 				}, nil
 			},
 			config: func() gh.Config {
@@ -88,7 +88,7 @@ func Test_remoteResolver(t *testing.T) {
 			name: "one authenticated host with no matching git remote and fallback remotes",
 			remotes: func() (git.RemoteSet, error) {
 				return git.RemoteSet{
-					git.NewRemote("origin", "https://github.com/owner/repo.git"),
+					git.NewRemote("origin", "https://bitbucket.org/owner/repo.git"),
 				}, nil
 			},
 			config: func() gh.Config {
@@ -142,7 +142,7 @@ func Test_remoteResolver(t *testing.T) {
 				}
 				return cfg
 			}(),
-			output: []string{"upstream", "github", "origin", "fork"},
+			output: []string{"upstream", "origin", "github", "fork"},
 		},
 		{
 			name: "multiple authenticated hosts with no matching git remote",
@@ -189,9 +189,9 @@ func Test_remoteResolver(t *testing.T) {
 			remotes: func() (git.RemoteSet, error) {
 				return git.RemoteSet{
 					git.NewRemote("upstream", "https://example.com/owner/repo.git"),
-					git.NewRemote("github", "https://github.com/owner/repo.git"),
+					git.NewRemote("github", "https://bitbucket.org/owner/repo.git"),
 					git.NewRemote("origin", "https://example.com/owner/repo.git"),
-					git.NewRemote("fork", "https://github.com/owner/repo.git"),
+					git.NewRemote("fork", "https://bitbucket.org/owner/repo.git"),
 					git.NewRemote("test", "https://test.com/owner/repo.git"),
 				}, nil
 			},
@@ -205,7 +205,7 @@ func Test_remoteResolver(t *testing.T) {
 				}
 				return cfg
 			}(),
-			output: []string{"upstream", "github", "origin", "fork"},
+			output: []string{"upstream", "origin", "github", "fork"},
 		},
 		{
 			name: "override host with no matching git remotes",
@@ -219,7 +219,7 @@ func Test_remoteResolver(t *testing.T) {
 				cfg.AuthenticationFunc = func() gh.AuthConfig {
 					authCfg := &config.AuthConfig{}
 					authCfg.SetHosts([]string{"example.com"})
-					authCfg.SetDefaultHost("test.com", "GH_HOST")
+					authCfg.SetDefaultHost("test.com", "BB_HOST")
 					return authCfg
 				}
 				return cfg
@@ -239,7 +239,7 @@ func Test_remoteResolver(t *testing.T) {
 				cfg.AuthenticationFunc = func() gh.AuthConfig {
 					authCfg := &config.AuthConfig{}
 					authCfg.SetHosts([]string{"example.com"})
-					authCfg.SetDefaultHost("test.com", "GH_HOST")
+					authCfg.SetDefaultHost("test.com", "BB_HOST")
 					return authCfg
 				}
 				return cfg
@@ -260,7 +260,7 @@ func Test_remoteResolver(t *testing.T) {
 				cfg.AuthenticationFunc = func() gh.AuthConfig {
 					authCfg := &config.AuthConfig{}
 					authCfg.SetHosts([]string{"example.com", "test.com"})
-					authCfg.SetDefaultHost("test.com", "GH_HOST")
+					authCfg.SetDefaultHost("test.com", "BB_HOST")
 					return authCfg
 				}
 				return cfg
@@ -304,7 +304,7 @@ func Test_remoteResolver_Caching(t *testing.T) {
 
 				readRemotesCalled = true
 				return git.RemoteSet{
-					git.NewRemote("origin", "https://github.com/owner/repo.git"),
+					git.NewRemote("origin", "https://bitbucket.org/owner/repo.git"),
 				}, nil
 			},
 			getConfig: func() (gh.Config, error) {
@@ -341,7 +341,7 @@ func Test_remoteResolver_Caching(t *testing.T) {
 			readRemotes: func() (git.RemoteSet, error) {
 				if readRemotesCalled {
 					return git.RemoteSet{
-						git.NewRemote("origin", "https://github.com/owner/repo.git"),
+						git.NewRemote("origin", "https://bitbucket.org/owner/repo.git"),
 					}, nil
 				}
 

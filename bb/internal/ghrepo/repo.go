@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
 	"github.com/cli/go-gh/v2/pkg/repository"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/ghinstance"
 )
 
 // Interface describes an object that represents a GitHub repository

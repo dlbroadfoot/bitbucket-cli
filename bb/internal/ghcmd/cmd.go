@@ -14,6 +14,7 @@ import (
 
 	surveyCore "github.com/AlecAivazis/survey/v2/core"
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/cli/safeexec"
 	"github.com/dlbroadfoot/bitbucket-cli/api"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/build"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
@@ -24,7 +25,6 @@ import (
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/iostreams"
 	"github.com/dlbroadfoot/bitbucket-cli/utils"
-	"github.com/cli/safeexec"
 	"github.com/mgutz/ansi"
 	"github.com/spf13/cobra"
 )

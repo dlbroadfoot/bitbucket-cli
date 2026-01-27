@@ -125,7 +125,7 @@ func TestTokenRun(t *testing.T) {
 			name:       "no token",
 			opts:       TokenOptions{},
 			wantErr:    true,
-			wantErrMsg: "no oauth token found for github.com",
+			wantErrMsg: "no token found for github.com",
 		},
 		{
 			name: "no token for hostname user",
@@ -134,7 +134,7 @@ func TestTokenRun(t *testing.T) {
 				Username: "test-user",
 			},
 			wantErr:    true,
-			wantErrMsg: "no oauth token found for ghe.io account test-user",
+			wantErrMsg: "no token found for ghe.io account test-user",
 		},
 		{
 			name: "uses default host when one is not provided",
@@ -221,7 +221,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			name:       "no token",
 			opts:       TokenOptions{},
 			wantErr:    true,
-			wantErrMsg: "no oauth token found for github.com",
+			wantErrMsg: "no token found for github.com",
 		},
 		{
 			name: "no token for hostname user",
@@ -230,7 +230,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 				Username: "test-user",
 			},
 			wantErr:    true,
-			wantErrMsg: "no oauth token found for ghe.io account test-user",
+			wantErrMsg: "no token found for ghe.io account test-user",
 		},
 		{
 			name: "token for user",

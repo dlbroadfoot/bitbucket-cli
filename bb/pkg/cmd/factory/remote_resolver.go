@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/cli/go-gh/v2/pkg/ssh"
 	"github.com/dlbroadfoot/bitbucket-cli/context"
 	"github.com/dlbroadfoot/bitbucket-cli/git"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/set"
-	"github.com/cli/go-gh/v2/pkg/ssh"
 )
 
 const (

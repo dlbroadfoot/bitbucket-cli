@@ -167,8 +167,8 @@ type Comment struct {
 	Parent *struct {
 		ID int `json:"id"`
 	} `json:"parent,omitempty"`
-	Deleted bool   `json:"deleted"`
-	Links   Links  `json:"links"`
+	Deleted bool  `json:"deleted"`
+	Links   Links `json:"links"`
 }
 
 // CommentList represents a paginated list of comments

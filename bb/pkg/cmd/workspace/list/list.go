@@ -55,12 +55,12 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 
 // Workspace represents a Bitbucket workspace
 type Workspace struct {
-	UUID    string `json:"uuid"`
-	Name    string `json:"name"`
-	Slug    string `json:"slug"`
-	Type    string `json:"type"`
-	IsPrivate bool  `json:"is_private"`
-	Links   struct {
+	UUID      string `json:"uuid"`
+	Name      string `json:"name"`
+	Slug      string `json:"slug"`
+	Type      string `json:"type"`
+	IsPrivate bool   `json:"is_private"`
+	Links     struct {
 		HTML struct {
 			Href string `json:"href"`
 		} `json:"html"`

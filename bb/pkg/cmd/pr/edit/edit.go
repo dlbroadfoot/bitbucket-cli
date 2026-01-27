@@ -169,11 +169,11 @@ func editRun(opts *EditOptions) error {
 
 // PRUpdatePayload represents the fields that can be updated on a PR
 type PRUpdatePayload struct {
-	Title             string       `json:"title,omitempty"`
-	Description       string       `json:"description,omitempty"`
-	Reviewers         []UserRef    `json:"reviewers,omitempty"`
-	Destination       *BranchRef   `json:"destination,omitempty"`
-	CloseSourceBranch *bool        `json:"close_source_branch,omitempty"`
+	Title             string     `json:"title,omitempty"`
+	Description       string     `json:"description,omitempty"`
+	Reviewers         []UserRef  `json:"reviewers,omitempty"`
+	Destination       *BranchRef `json:"destination,omitempty"`
+	CloseSourceBranch *bool      `json:"close_source_branch,omitempty"`
 }
 
 type UserRef struct {

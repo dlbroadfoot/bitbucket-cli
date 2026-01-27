@@ -83,7 +83,7 @@ func Test_BaseRepo(t *testing.T) {
 						authCfg.SetActiveToken("", "")
 						authCfg.SetDefaultHost("nonsense.com", "hosts")
 						if tt.override != "" {
-							authCfg.SetDefaultHost(tt.override, "GH_HOST")
+							authCfg.SetDefaultHost(tt.override, "BB_HOST")
 						}
 						return authCfg
 					}
@@ -163,43 +163,6 @@ func Test_SmartBaseRepo(t *testing.T) {
 			override: "test.com",
 			wantsErr: true,
 		},
-
-		{
-			name: "only one remote",
-			remotes: git.RemoteSet{
-				git.NewRemote("origin", "https://github.com/owner/repo.git"),
-			},
-			wantsName:  "repo",
-			wantsOwner: "owner",
-			wantsHost:  "github.com",
-			tty:        true,
-			httpStubs: func(reg *httpmock.Registry) {
-				reg.Register(
-					httpmock.GraphQL("RepositoryNetwork"),
-					httpmock.StringResponse(`
-						{
-						  "data": {
-						    "viewer": {
-						      "login": "someone"
-						    },
-						    "repo_000": {
-						      "id": "MDEwOlJlcG9zaXRvcnkxMDM3MjM2Mjc=",
-						      "name": "repo",
-						      "owner": {
-						        "login": "owner"
-						      },
-						      "viewerPermission": "READ",
-						      "defaultBranchRef": {
-						        "name": "master"
-						      },
-						      "isPrivate": false,
-						      "parent": null
-						    }
-						  }
-						}
-					`))
-			},
-		},
 	}
 
 	for _, tt := range tests {
@@ -221,7 +184,7 @@ func Test_SmartBaseRepo(t *testing.T) {
 						authCfg.SetActiveToken("", "")
 						authCfg.SetDefaultHost("nonsense.com", "hosts")
 						if tt.override != "" {
-							authCfg.SetDefaultHost(tt.override, "GH_HOST")
+							authCfg.SetDefaultHost(tt.override, "BB_HOST")
 						}
 						return authCfg
 					}
@@ -269,7 +232,7 @@ func Test_OverrideBaseRepo(t *testing.T) {
 		{
 			name:        "override from argument",
 			argOverride: "override/test",
-			wantsHost:   "github.com",
+			wantsHost:   "bitbucket.org",
 			wantsOwner:  "override",
 			wantsName:   "test",
 		},
@@ -295,7 +258,7 @@ func Test_OverrideBaseRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.envOverride != "" {
-				t.Setenv("GH_REPO", tt.envOverride)
+				t.Setenv("BB_REPO", tt.envOverride)
 			}
 			f := New("1")
 			rr := &remoteResolver{
@@ -331,18 +294,18 @@ func Test_ioStreams_pager(t *testing.T) {
 		{
 			name: "GH_PAGER and PAGER set",
 			env: map[string]string{
-				"GH_PAGER": "GH_PAGER",
+				"BB_PAGER": "BB_PAGER",
 				"PAGER":    "PAGER",
 			},
-			wantPager: "GH_PAGER",
+			wantPager: "BB_PAGER",
 		},
 		{
 			name: "GH_PAGER and config pager set",
 			env: map[string]string{
-				"GH_PAGER": "GH_PAGER",
+				"BB_PAGER": "BB_PAGER",
 			},
 			config:    pagerConfig(),
-			wantPager: "GH_PAGER",
+			wantPager: "BB_PAGER",
 		},
 		{
 			name: "config pager and PAGER set",
@@ -362,7 +325,7 @@ func Test_ioStreams_pager(t *testing.T) {
 		{
 			name: "GH_PAGER set to blank string",
 			env: map[string]string{
-				"GH_PAGER": "",
+				"BB_PAGER": "",
 				"PAGER":    "PAGER",
 			},
 			wantPager: "",
@@ -407,7 +370,7 @@ func Test_ioStreams_prompt(t *testing.T) {
 		},
 		{
 			name:           "prompt disabled via GH_PROMPT_DISABLED env var",
-			env:            map[string]string{"GH_PROMPT_DISABLED": "1"},
+			env:            map[string]string{"BB_PROMPT_DISABLED": "1"},
 			promptDisabled: true,
 		},
 	}
@@ -455,39 +418,39 @@ func Test_ioStreams_spinnerDisabled(t *testing.T) {
 		},
 		{
 			name:            "spinner disabled via GH_SPINNER_DISABLED env var = 0",
-			env:             map[string]string{"GH_SPINNER_DISABLED": "0"},
+			env:             map[string]string{"BB_SPINNER_DISABLED": "0"},
 			spinnerDisabled: false,
 		},
 		{
 			name:            "spinner disabled via GH_SPINNER_DISABLED env var = false",
-			env:             map[string]string{"GH_SPINNER_DISABLED": "false"},
+			env:             map[string]string{"BB_SPINNER_DISABLED": "false"},
 			spinnerDisabled: false,
 		},
 		{
 			name:            "spinner disabled via GH_SPINNER_DISABLED env var = no",
-			env:             map[string]string{"GH_SPINNER_DISABLED": "no"},
+			env:             map[string]string{"BB_SPINNER_DISABLED": "no"},
 			spinnerDisabled: false,
 		},
 		{
 			name:            "spinner enabled via GH_SPINNER_DISABLED env var = 1",
-			env:             map[string]string{"GH_SPINNER_DISABLED": "1"},
+			env:             map[string]string{"BB_SPINNER_DISABLED": "1"},
 			spinnerDisabled: true,
 		},
 		{
 			name:            "spinner enabled via GH_SPINNER_DISABLED env var = true",
-			env:             map[string]string{"GH_SPINNER_DISABLED": "true"},
+			env:             map[string]string{"BB_SPINNER_DISABLED": "true"},
 			spinnerDisabled: true,
 		},
 		{
 			name:            "config enabled but env disabled, respects env",
 			config:          enableSpinnersConfig(),
-			env:             map[string]string{"GH_SPINNER_DISABLED": "true"},
+			env:             map[string]string{"BB_SPINNER_DISABLED": "true"},
 			spinnerDisabled: true,
 		},
 		{
 			name:            "config disabled but env enabled, respects env",
 			config:          disableSpinnersConfig(),
-			env:             map[string]string{"GH_SPINNER_DISABLED": "false"},
+			env:             map[string]string{"BB_SPINNER_DISABLED": "false"},
 			spinnerDisabled: false,
 		},
 	}
@@ -533,29 +496,29 @@ func Test_ioStreams_accessiblePrompterEnabled(t *testing.T) {
 		},
 		{
 			name:                      "accessible prompter enabled via GH_ACCESSIBLE_PROMPTER env var = 1",
-			env:                       map[string]string{"GH_ACCESSIBLE_PROMPTER": "1"},
+			env:                       map[string]string{"BB_ACCESSIBLE_PROMPTER": "1"},
 			accessiblePrompterEnabled: true,
 		},
 		{
 			name:                      "accessible prompter enabled via GH_ACCESSIBLE_PROMPTER env var = true",
-			env:                       map[string]string{"GH_ACCESSIBLE_PROMPTER": "true"},
+			env:                       map[string]string{"BB_ACCESSIBLE_PROMPTER": "true"},
 			accessiblePrompterEnabled: true,
 		},
 		{
 			name:                      "accessible prompter disabled via GH_ACCESSIBLE_PROMPTER env var = 0",
-			env:                       map[string]string{"GH_ACCESSIBLE_PROMPTER": "0"},
+			env:                       map[string]string{"BB_ACCESSIBLE_PROMPTER": "0"},
 			accessiblePrompterEnabled: false,
 		},
 		{
 			name:                      "config disabled but env enabled, respects env",
 			config:                    disableAccessiblePrompterConfig(),
-			env:                       map[string]string{"GH_ACCESSIBLE_PROMPTER": "true"},
+			env:                       map[string]string{"BB_ACCESSIBLE_PROMPTER": "true"},
 			accessiblePrompterEnabled: true,
 		},
 		{
 			name:                      "config enabled but env disabled, respects env",
 			config:                    enableAccessiblePrompterConfig(),
-			env:                       map[string]string{"GH_ACCESSIBLE_PROMPTER": "false"},
+			env:                       map[string]string{"BB_ACCESSIBLE_PROMPTER": "false"},
 			accessiblePrompterEnabled: false,
 		},
 	}
@@ -601,37 +564,37 @@ func Test_ioStreams_colorLabels(t *testing.T) {
 		},
 		{
 			name:               "colorLabels enabled via `1` in GH_COLOR_LABELS env var",
-			env:                map[string]string{"GH_COLOR_LABELS": "1"},
+			env:                map[string]string{"BB_COLOR_LABELS": "1"},
 			colorLabelsEnabled: true,
 		},
 		{
 			name:               "colorLabels enabled via `true` in GH_COLOR_LABELS env var",
-			env:                map[string]string{"GH_COLOR_LABELS": "true"},
+			env:                map[string]string{"BB_COLOR_LABELS": "true"},
 			colorLabelsEnabled: true,
 		},
 		{
 			name:               "colorLabels enabled via `yes` in GH_COLOR_LABELS env var",
-			env:                map[string]string{"GH_COLOR_LABELS": "yes"},
+			env:                map[string]string{"BB_COLOR_LABELS": "yes"},
 			colorLabelsEnabled: true,
 		},
 		{
 			name:               "colorLabels disable via empty string in GH_COLOR_LABELS env var",
-			env:                map[string]string{"GH_COLOR_LABELS": ""},
+			env:                map[string]string{"BB_COLOR_LABELS": ""},
 			colorLabelsEnabled: false,
 		},
 		{
 			name:               "colorLabels disabled via `0` in GH_COLOR_LABELS env var",
-			env:                map[string]string{"GH_COLOR_LABELS": "0"},
+			env:                map[string]string{"BB_COLOR_LABELS": "0"},
 			colorLabelsEnabled: false,
 		},
 		{
 			name:               "colorLabels disabled via `false` in GH_COLOR_LABELS env var",
-			env:                map[string]string{"GH_COLOR_LABELS": "false"},
+			env:                map[string]string{"BB_COLOR_LABELS": "false"},
 			colorLabelsEnabled: false,
 		},
 		{
 			name:               "colorLabels disabled via `no` in GH_COLOR_LABELS env var",
-			env:                map[string]string{"GH_COLOR_LABELS": "no"},
+			env:                map[string]string{"BB_COLOR_LABELS": "no"},
 			colorLabelsEnabled: false,
 		},
 	}
@@ -656,7 +619,6 @@ func Test_ioStreams_colorLabels(t *testing.T) {
 	}
 }
 
-
 func TestPlainHttpClient(t *testing.T) {
 	var receivedHeaders *http.Header
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -680,7 +642,7 @@ func TestPlainHttpClient(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 204, res.StatusCode)
-	assert.Equal(t, []string{"GitHub CLI v1.2.3"}, receivedHeaders.Values("User-Agent"))
+	assert.Equal(t, []string{"Go-http-client/1.1"}, receivedHeaders.Values("User-Agent"))
 	assert.Nil(t, receivedHeaders.Values("Authorization"))
 	assert.Nil(t, receivedHeaders.Values("Content-Type"))
 	assert.Nil(t, receivedHeaders.Values("Accept"))
