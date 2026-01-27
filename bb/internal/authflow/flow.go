@@ -32,13 +32,13 @@ func APITokenAuth(hostname string, IO *iostreams.IOStreams, prompter Prompter) (
 	cs := IO.ColorScheme()
 
 	// Show guidance for creating an API Token
-	fmt.Fprint(w, fmt.Sprintf(`
+	fmt.Fprint(w, `
 Tip: you can generate an API Token here https://bitbucket.org/account/settings/api-tokens/
 Required scopes: read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
 
 Note: API tokens require your Atlassian account email (not your Bitbucket username).
 
-`, hostname))
+`)
 
 	// Prompt for email
 	email, err := prompter.Input("Atlassian account email:", "")

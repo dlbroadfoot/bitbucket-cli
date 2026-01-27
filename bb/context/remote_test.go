@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	"github.com/dlbroadfoot/bitbucket-cli/git"
-	"github.com/dlbroadfoot/bitbucket-cli/internal/ghrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Remotes_FindByName(t *testing.T) {
 	list := Remotes{
-		&Remote{Remote: &git.Remote{Name: "mona"}, Repo: ghrepo.New("monalisa", "myfork")},
-		&Remote{Remote: &git.Remote{Name: "origin"}, Repo: ghrepo.New("monalisa", "octo-cat")},
-		&Remote{Remote: &git.Remote{Name: "upstream"}, Repo: ghrepo.New("hubot", "tools")},
+		&Remote{Remote: &git.Remote{Name: "mona"}, Repo: bbrepo.New("monalisa", "myfork")},
+		&Remote{Remote: &git.Remote{Name: "origin"}, Repo: bbrepo.New("monalisa", "octo-cat")},
+		&Remote{Remote: &git.Remote{Name: "upstream"}, Repo: bbrepo.New("hubot", "tools")},
 	}
 
 	r, err := list.FindByName("upstream", "origin")
@@ -30,8 +30,8 @@ func Test_Remotes_FindByName(t *testing.T) {
 
 func Test_Remotes_FindByRepo(t *testing.T) {
 	list := Remotes{
-		&Remote{Remote: &git.Remote{Name: "remote-0"}, Repo: ghrepo.New("owner", "repo")},
-		&Remote{Remote: &git.Remote{Name: "remote-1"}, Repo: ghrepo.New("another-owner", "another-repo")},
+		&Remote{Remote: &git.Remote{Name: "remote-0"}, Repo: bbrepo.New("owner", "repo")},
+		&Remote{Remote: &git.Remote{Name: "remote-1"}, Repo: bbrepo.New("another-owner", "another-repo")},
 	}
 
 	tests := []struct {
@@ -122,15 +122,15 @@ func Test_translateRemotes(t *testing.T) {
 	if result[0].Name != "public" {
 		t.Errorf("got %q", result[0].Name)
 	}
-	if result[0].RepoName() != "hello" {
-		t.Errorf("got %q", result[0].RepoName())
+	if result[0].RepoSlug() != "hello" {
+		t.Errorf("got %q", result[0].RepoSlug())
 	}
 }
 
 func Test_FilterByHosts(t *testing.T) {
-	r1 := &Remote{Remote: &git.Remote{Name: "mona"}, Repo: ghrepo.NewWithHost("monalisa", "myfork", "test.com")}
-	r2 := &Remote{Remote: &git.Remote{Name: "origin"}, Repo: ghrepo.NewWithHost("monalisa", "octo-cat", "example.com")}
-	r3 := &Remote{Remote: &git.Remote{Name: "upstream"}, Repo: ghrepo.New("hubot", "tools")}
+	r1 := &Remote{Remote: &git.Remote{Name: "mona"}, Repo: bbrepo.NewWithHost("monalisa", "myfork", "test.com")}
+	r2 := &Remote{Remote: &git.Remote{Name: "origin"}, Repo: bbrepo.NewWithHost("monalisa", "octo-cat", "example.com")}
+	r3 := &Remote{Remote: &git.Remote{Name: "upstream"}, Repo: bbrepo.New("hubot", "tools")}
 	list := Remotes{r1, r2, r3}
 	f := list.FilterByHosts([]string{"example.com", "test.com"})
 	assert.Equal(t, 2, len(f))
