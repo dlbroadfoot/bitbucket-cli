@@ -396,12 +396,9 @@ func verifyToken(hostname, token string) error {
 		return fmt.Errorf("invalid token format: expected email:api_token")
 	}
 
-	// Extract workspace from email prefix to query repositories
-	// This endpoint requires read:repository:bitbucket scope (commonly granted)
-	emailPrefix := strings.Split(email, "@")[0]
-
+	// Use /user endpoint to verify credentials (requires read:account scope)
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"repositories/"+emailPrefix+"?pagelen=1", nil)
+	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"user", nil)
 	if err != nil {
 		return err
 	}

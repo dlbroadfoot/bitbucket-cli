@@ -19,8 +19,10 @@
 ### From Source (Go 1.21+)
 
 ```bash
-go install github.com/dlbroadfoot/bitbucket-cli/cmd/bb@latest
+go install github.com/dlbroadfoot/bitbucket-cli/bb/cmd/bb@latest
 ```
+
+This installs the `bb` binary to `$GOPATH/bin` (typically `~/go/bin`).
 
 ### From Releases
 
@@ -60,15 +62,6 @@ sudo rpm -i bb_*_linux_amd64.rpm
 #### Windows
 
 Download the `.zip` file from the [releases page](https://github.com/dlbroadfoot/bitbucket-cli/releases) and add the extracted directory to your PATH.
-
-### Build from Source
-
-```bash
-git clone https://github.com/dlbroadfoot/bitbucket-cli.git
-cd bitbucket-cli
-make bin/bb
-./bin/bb --version
-```
 
 ## Authentication
 

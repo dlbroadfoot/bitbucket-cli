@@ -206,17 +206,11 @@ func loginRun(opts *LoginOptions) error {
 
 // verifyCredentialsAndGetUsername checks if the email and API token are valid
 // and returns the Bitbucket username associated with the account.
-// It uses the /repositories/{workspace} endpoint which only requires read:repository:bitbucket scope.
+// It uses the /user endpoint which requires read:account scope.
 func verifyCredentialsAndGetUsername(hostname, email, token string) (string, error) {
 	client := &http.Client{}
 
-	// Extract potential workspace from email prefix
-	// This is used to query repositories which requires read:repository:bitbucket scope
-	emailPrefix := strings.Split(email, "@")[0]
-
-	// Use repositories endpoint - requires read:repository:bitbucket scope
-	// Query the user's own repositories to verify credentials and get owner info
-	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"repositories/"+emailPrefix+"?pagelen=1", nil)
+	req, err := http.NewRequest("GET", bbinstance.RESTPrefix(hostname)+"user", nil)
 	if err != nil {
 		return "", err
 	}
@@ -238,24 +232,17 @@ func verifyCredentialsAndGetUsername(hostname, email, token string) (string, err
 		return "", fmt.Errorf("unexpected response status: %d: %s", resp.StatusCode, string(body))
 	}
 
-	// Parse the response - repositories endpoint returns a paginated list
-	// We extract the username from the owner.nickname field
-	var reposResp struct {
-		Values []struct {
-			Owner struct {
-				Nickname string `json:"nickname"`
-			} `json:"owner"`
-		} `json:"values"`
+	// Parse the username from the user response
+	var userResp struct {
+		Username string `json:"username"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&reposResp); err != nil {
-		return "", fmt.Errorf("failed to parse repositories response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
+		return "", fmt.Errorf("failed to parse user response: %w", err)
 	}
 
-	// Get username from owner info
-	if len(reposResp.Values) > 0 && reposResp.Values[0].Owner.Nickname != "" {
-		return reposResp.Values[0].Owner.Nickname, nil
+	if userResp.Username == "" {
+		return "", fmt.Errorf("no username in response")
 	}
 
-	// Fallback: use email prefix as username
-	return emailPrefix, nil
+	return userResp.Username, nil
 }
