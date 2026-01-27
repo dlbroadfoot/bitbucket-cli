@@ -98,8 +98,8 @@ func Test_BaseRepo(t *testing.T) {
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, tt.wantsName, repo.RepoName())
-			assert.Equal(t, tt.wantsOwner, repo.RepoOwner())
+			assert.Equal(t, tt.wantsName, repo.RepoSlug())
+			assert.Equal(t, tt.wantsOwner, repo.RepoWorkspace())
 			assert.Equal(t, tt.wantsHost, repo.RepoHost())
 		})
 	}
@@ -246,8 +246,8 @@ func Test_SmartBaseRepo(t *testing.T) {
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, tt.wantsName, repo.RepoName())
-			assert.Equal(t, tt.wantsOwner, repo.RepoOwner())
+			assert.Equal(t, tt.wantsName, repo.RepoSlug())
+			assert.Equal(t, tt.wantsOwner, repo.RepoWorkspace())
 			assert.Equal(t, tt.wantsHost, repo.RepoHost())
 		})
 	}
@@ -314,8 +314,8 @@ func Test_OverrideBaseRepo(t *testing.T) {
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, tt.wantsName, repo.RepoName())
-			assert.Equal(t, tt.wantsOwner, repo.RepoOwner())
+			assert.Equal(t, tt.wantsName, repo.RepoSlug())
+			assert.Equal(t, tt.wantsOwner, repo.RepoWorkspace())
 			assert.Equal(t, tt.wantsHost, repo.RepoHost())
 		})
 	}
@@ -656,59 +656,6 @@ func Test_ioStreams_colorLabels(t *testing.T) {
 	}
 }
 
-func TestSSOURL(t *testing.T) {
-	tests := []struct {
-		name       string
-		host       string
-		sso        string
-		wantStderr string
-		wantSSO    string
-	}{
-		{
-			name:       "SSO challenge in response header",
-			host:       "github.com",
-			sso:        "required; url=https://github.com/login/sso?return_to=xyz&param=123abc; another",
-			wantStderr: "",
-			wantSSO:    "https://github.com/login/sso?return_to=xyz&param=123abc",
-		},
-	}
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if sso := r.URL.Query().Get("sso"); sso != "" {
-			w.Header().Set("X-GitHub-SSO", sso)
-		}
-		w.WriteHeader(http.StatusNoContent)
-	}))
-	defer ts.Close()
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := New("1")
-			f.Config = func() (gh.Config, error) {
-				return config.NewBlankConfig(), nil
-			}
-			ios, _, _, stderr := iostreams.Test()
-			f.IOStreams = ios
-			client, err := httpClientFunc(f, "v1.2.3")()
-			require.NoError(t, err)
-			req, err := http.NewRequest("GET", ts.URL, nil)
-			if tt.sso != "" {
-				q := req.URL.Query()
-				q.Set("sso", tt.sso)
-				req.URL.RawQuery = q.Encode()
-			}
-			req.Host = tt.host
-			require.NoError(t, err)
-
-			res, err := client.Do(req)
-			require.NoError(t, err)
-
-			assert.Equal(t, 204, res.StatusCode)
-			assert.Equal(t, tt.wantStderr, stderr.String())
-			assert.Equal(t, tt.wantSSO, SSOURL())
-		})
-	}
-}
 
 func TestPlainHttpClient(t *testing.T) {
 	var receivedHeaders *http.Header

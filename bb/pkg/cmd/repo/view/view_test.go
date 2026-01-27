@@ -11,7 +11,7 @@ import (
 	"github.com/dlbroadfoot/bitbucket-cli/internal/browser"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/config"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
-	"github.com/dlbroadfoot/bitbucket-cli/internal/ghrepo"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/bbrepo"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/run"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/httpmock"
@@ -202,8 +202,8 @@ func Test_RepoView_Web(t *testing.T) {
 			HttpClient: func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			},
-			BaseRepo: func() (ghrepo.Interface, error) {
-				return ghrepo.New("OWNER", "REPO"), nil
+			BaseRepo: func() (bbrepo.Interface, error) {
+				return bbrepo.New("OWNER", "REPO"), nil
 			},
 			Browser: browser,
 		}
@@ -329,8 +329,8 @@ func Test_ViewRun(t *testing.T) {
 			tt.repoName = "OWNER/REPO"
 		}
 
-		tt.opts.BaseRepo = func() (ghrepo.Interface, error) {
-			repo, _ := ghrepo.FromFullName(tt.repoName)
+		tt.opts.BaseRepo = func() (bbrepo.Interface, error) {
+			repo, _ := bbrepo.FromFullName(tt.repoName)
 			return repo, nil
 		}
 
@@ -416,8 +416,8 @@ func Test_ViewRun_NonMarkdownReadme(t *testing.T) {
 			HttpClient: func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			},
-			BaseRepo: func() (ghrepo.Interface, error) {
-				return ghrepo.New("OWNER", "REPO"), nil
+			BaseRepo: func() (bbrepo.Interface, error) {
+				return bbrepo.New("OWNER", "REPO"), nil
 			},
 		}
 
@@ -482,8 +482,8 @@ func Test_ViewRun_NoReadme(t *testing.T) {
 			HttpClient: func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			},
-			BaseRepo: func() (ghrepo.Interface, error) {
-				return ghrepo.New("OWNER", "REPO"), nil
+			BaseRepo: func() (bbrepo.Interface, error) {
+				return bbrepo.New("OWNER", "REPO"), nil
 			},
 		}
 
@@ -552,8 +552,8 @@ func Test_ViewRun_NoDescription(t *testing.T) {
 			HttpClient: func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			},
-			BaseRepo: func() (ghrepo.Interface, error) {
-				return ghrepo.New("OWNER", "REPO"), nil
+			BaseRepo: func() (bbrepo.Interface, error) {
+				return bbrepo.New("OWNER", "REPO"), nil
 			},
 		}
 
@@ -667,8 +667,8 @@ func Test_ViewRun_HandlesSpecialCharacters(t *testing.T) {
 			tt.repoName = "OWNER/REPO"
 		}
 
-		tt.opts.BaseRepo = func() (ghrepo.Interface, error) {
-			repo, _ := ghrepo.FromFullName(tt.repoName)
+		tt.opts.BaseRepo = func() (bbrepo.Interface, error) {
+			repo, _ := bbrepo.FromFullName(tt.repoName)
 			return repo, nil
 		}
 
@@ -719,8 +719,8 @@ func Test_viewRun_json(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		},
-		BaseRepo: func() (ghrepo.Interface, error) {
-			return ghrepo.New("OWNER", "REPO"), nil
+		BaseRepo: func() (bbrepo.Interface, error) {
+			return bbrepo.New("OWNER", "REPO"), nil
 		},
 		Exporter: &testExporter{
 			fields: []string{"name", "defaultBranchRef"},
@@ -750,6 +750,10 @@ func (e *testExporter) Fields() []string {
 func (e *testExporter) Write(io *iostreams.IOStreams, data interface{}) error {
 	r := data.(*api.Repository)
 	fmt.Fprintf(io.Out, "name: %s\n", r.Name)
-	fmt.Fprintf(io.Out, "defaultBranchRef: %s\n", r.DefaultBranchRef.Name)
+	branchName := ""
+	if r.MainBranch != nil {
+		branchName = r.MainBranch.Name
+	}
+	fmt.Fprintf(io.Out, "defaultBranchRef: %s\n", branchName)
 	return nil
 }
