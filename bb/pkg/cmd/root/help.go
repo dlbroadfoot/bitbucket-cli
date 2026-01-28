@@ -133,10 +133,8 @@ func rootHelpFunc(f *cmdutil.Factory, command *cobra.Command, _ []string) {
 		helpEntries = append(helpEntries, helpEntry{"ALIASES", strings.Join(BuildAliasList(command, command.Aliases), ", ") + "\n"})
 	}
 
-	// Statically calculated padding for non-extension commands,
-	// longest is `gh accessibility` with 13 characters + 1 space.
-	//
-	// Should consider novel way to calculate this in the future [AF]
+	// Statically calculated padding for non-extension commands.
+	// Should consider novel way to calculate this in the future.
 	namePadding := 14
 
 	for _, g := range GroupedCommands(command) {
@@ -214,7 +212,7 @@ func authHelp() string {
 
 	return heredoc.Doc(`
 		To get started with Bitbucket CLI, please run:  bb auth login
-		Alternatively, populate the BB_TOKEN environment variable with a Bitbucket App Password.
+		Alternatively, populate the BB_TOKEN environment variable with a Bitbucket API token.
 	`)
 }
 

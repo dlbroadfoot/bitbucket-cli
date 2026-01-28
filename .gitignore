@@ -3,7 +3,6 @@
 /share/fish/vendor_completions.d
 /share/man/man1
 /share/zsh/site-functions
-/gh-cli
 .envrc
 /dist
 /site
@@ -16,7 +15,7 @@
 /build/macOS/resources
 
 # Windows resource files
-/cmd/gh/*.syso
+/cmd/bb/*.syso
 
 # VS Code
 .vscode

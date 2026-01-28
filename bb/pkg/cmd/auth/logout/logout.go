@@ -39,10 +39,10 @@ func NewCmdLogout(f *cmdutil.Factory, runF func(*LogoutOptions) error) *cobra.Co
 			for an account. The authentication configuration is only
 			removed locally.
 
-			This command does not revoke App Passwords. To revoke an App Password:
+			This command does not revoke API tokens. To revoke an API token:
 
-			1. Visit <https://bitbucket.org/account/settings/app-passwords/>
-			2. Find the App Password you want to revoke
+			1. Visit <https://id.atlassian.com/manage-profile/security/api-tokens>
+			2. Find the API token you want to revoke
 			3. Click "Revoke"
 		`),
 		Example: heredoc.Doc(`

@@ -42,8 +42,8 @@ var HelpTopics = []helpTopic{
 		name:  "environment",
 		short: "Environment variables that can be used with bb",
 		long: heredoc.Docf(`
-			%[1]sBB_TOKEN%[1]s: an authentication token (App Password) that will be used when
-			a command targets %[1]sbitbucket.org%[1]s. The token should be in the format %[1]susername:app_password%[1]s.
+			%[1]sBB_TOKEN%[1]s: an authentication token that will be used when
+			a command targets %[1]sbitbucket.org%[1]s. The token should be in the format %[1]semail:api_token%[1]s.
 			Setting this avoids being prompted to authenticate and takes precedence over previously stored credentials.
 
 			%[1]sBB_HOST%[1]s: specify the Bitbucket hostname for commands where a hostname has not been provided, or
@@ -161,8 +161,8 @@ var HelpTopics = []helpTopic{
 		`, "`"),
 		example: heredoc.Doc(`
 			# Default output format
-			$ gh pr list
-			Showing 23 of 23 open pull requests in cli/cli
+			$ bb pr list
+			Showing 23 of 23 open pull requests in myworkspace/myrepo
 
 			#123  A helpful contribution          contribution-branch              about 1 day ago
 			#124  Improve the docs                docs-branch                      about 2 days ago
@@ -170,7 +170,7 @@ var HelpTopics = []helpTopic{
 
 
 			# Adding the --json flag with a list of field names
-			$ gh pr list --json number,title,author
+			$ bb pr list --json number,title,author
 			[
 			  {
 			    "author": {
@@ -197,14 +197,14 @@ var HelpTopics = []helpTopic{
 
 
 			# Adding the --jq flag and selecting fields from the array
-			$ gh pr list --json author --jq '.[].author.login'
+			$ bb pr list --json author --jq '.[].author.login'
 			monalisa
 			codercat
 			cli-maintainer
 
 
 			# --jq can be used to implement more complex filtering and output changes
-			$ gh issue list --json number,title,labels --jq \
+			$ bb issue list --json number,title,labels --jq \
 			  'map(select((.labels | length) > 0))    # must have labels
 			  | map(.labels = (.labels | map(.name))) # show only the label names
 			  | .[:3]                                 # select the first 3 results'
@@ -237,11 +237,11 @@ var HelpTopics = []helpTopic{
 
 
 			# Using the --template flag with the hyperlink helper
-			$ gh issue list --json title,url --template '{{range .}}{{hyperlink .url .title}}{{"\n"}}{{end}}'
+			$ bb issue list --json title,url --template '{{range .}}{{hyperlink .url .title}}{{"\n"}}{{end}}'
 
 
 			# Adding the --template flag and modifying the display format
-			$ gh pr list --json number,title,headRefName,updatedAt --template \
+			$ bb pr list --json number,title,headRefName,updatedAt --template \
 				'{{range .}}{{tablerow (printf "#%v" .number | autocolor "green") .title .headRefName (timeago .updatedAt)}}{{end}}'
 
 			#123  A helpful contribution      contribution-branch       about 1 day ago
@@ -250,7 +250,7 @@ var HelpTopics = []helpTopic{
 
 
 			# A more complex example with the --template flag which formats a pull request using multiple tables with headers
-			$ gh pr view 3519 --json number,title,body,reviews,assignees --template \
+			$ bb pr view 3519 --json number,title,body,reviews,assignees --template \
 			'{{printf "#%v" .number}} {{.title}}
 
 			{{.body}}

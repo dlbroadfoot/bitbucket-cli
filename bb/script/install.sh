@@ -54,12 +54,19 @@ else
   tar -xzf "${TMPDIR}/${ASSET}" -C "${TMPDIR}"
 fi
 
+# Find the binary (goreleaser wraps in a subdirectory)
+BINARY_PATH=$(find "$TMPDIR" -name "$BINARY" -type f -perm +111 | head -1)
+if [ -z "$BINARY_PATH" ]; then
+  echo "Failed to find ${BINARY} binary in archive" >&2
+  exit 1
+fi
+
 # Install binary
 if [ -w "$INSTALL_DIR" ]; then
-  cp "${TMPDIR}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
+  cp "$BINARY_PATH" "${INSTALL_DIR}/${BINARY}"
 else
   echo "Need sudo to install to ${INSTALL_DIR}"
-  sudo cp "${TMPDIR}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
+  sudo cp "$BINARY_PATH" "${INSTALL_DIR}/${BINARY}"
 fi
 
 chmod +x "${INSTALL_DIR}/${BINARY}"

@@ -74,7 +74,7 @@ func NewHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 }
 
 // AddBasicAuthHeader adds Basic Auth header for Bitbucket API requests.
-// Bitbucket uses Basic Auth with username:app_password format.
+// Bitbucket uses Basic Auth with email:api_token format.
 func AddBasicAuthHeader(rt http.RoundTripper, cfg tokenGetter) http.RoundTripper {
 	return &funcTripper{roundTrip: func(req *http.Request) (*http.Response, error) {
 		// If the header is already set in the request, don't overwrite it.
@@ -88,7 +88,7 @@ func AddBasicAuthHeader(rt http.RoundTripper, cfg tokenGetter) http.RoundTripper
 			if !redirectHostnameChange {
 				hostname := bbinstance.NormalizeHostname(getHost(req))
 				if token, _ := cfg.ActiveToken(hostname); token != "" {
-					// Bitbucket tokens are stored as "username:app_password"
+					// Bitbucket tokens are stored as "email:api_token"
 					// Use Basic Auth encoding
 					encoded := base64.StdEncoding.EncodeToString([]byte(token))
 					req.Header.Set(authorization, fmt.Sprintf("Basic %s", encoded))

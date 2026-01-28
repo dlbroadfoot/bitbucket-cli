@@ -313,7 +313,7 @@ func statusRun(opts *StatusOptions) error {
 }
 
 func maskToken(token string) string {
-	// For Bitbucket tokens stored as "username:app_password", mask the app password part
+	// For Bitbucket tokens stored as "email:api_token", mask the api token part
 	if idx := strings.Index(token, ":"); idx > -1 {
 		prefix := token[0 : idx+1]
 		remaining := token[idx+1:]

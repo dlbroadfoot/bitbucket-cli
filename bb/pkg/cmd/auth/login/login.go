@@ -49,9 +49,10 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 			The default hostname is %[1]sbitbucket.org%[1]s.
 
 			Authentication requires a Bitbucket API Token. To create one:
-			1. Go to https://bitbucket.org/account/settings/api-tokens/
-			2. Click "Create API token with scopes"
-			3. Select scopes: read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
+			1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
+			2. Click "Create API token"
+			3. The token needs the following scopes: read:user, read:account, read:repository,
+			   write:repository, read:pullrequest, write:pullrequest
 			4. Copy the generated token
 
 			Note: API tokens require your Atlassian account email (not your Bitbucket username)
@@ -139,8 +140,8 @@ func loginRun(opts *LoginOptions) error {
 	if opts.Interactive {
 		if email == "" {
 			fmt.Fprintln(opts.IO.ErrOut)
-			fmt.Fprintln(opts.IO.ErrOut, "Tip: Create an API token at https://bitbucket.org/account/settings/api-tokens/")
-			fmt.Fprintln(opts.IO.ErrOut, "Required scopes: read:account, read:repository, write:repository, read:pullrequest, write:pullrequest")
+			fmt.Fprintln(opts.IO.ErrOut, "Tip: Create an API token at https://id.atlassian.com/manage-profile/security/api-tokens")
+			fmt.Fprintln(opts.IO.ErrOut, "Required scopes: read:user, read:account, read:repository, write:repository, read:pullrequest, write:pullrequest")
 			fmt.Fprintln(opts.IO.ErrOut)
 
 			var err error

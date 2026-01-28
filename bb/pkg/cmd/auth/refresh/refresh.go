@@ -45,7 +45,7 @@ func NewCmdRefresh(f *cmdutil.Factory, runF func(*RefreshOptions) error) *cobra.
 		Long: heredoc.Docf(`
 			Re-authenticate with Bitbucket.
 
-			This command will prompt you to re-enter your App Password credentials.
+			This command will prompt you to re-enter your API token credentials.
 
 			If you have multiple accounts in %[1]sbb auth status%[1]s and want to refresh the credentials for an
 			inactive account, you will have to use %[1]sbb auth switch%[1]s to that account first before using
@@ -142,13 +142,13 @@ func refreshRun(opts *RefreshOptions) error {
 	// Prompt for credentials
 	cs := opts.IO.ColorScheme()
 
-	fmt.Fprint(opts.IO.ErrOut, fmt.Sprintf(`
-Tip: you can generate an App Password here https://%s/account/settings/app-passwords/
-Required permissions: Account (Read), Repositories (Read, Write), Pull Requests (Read, Write)
+	fmt.Fprint(opts.IO.ErrOut, `
+Tip: you can generate an API token here https://id.atlassian.com/manage-profile/security/api-tokens
+Required scopes: read:user, read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
 
-`, hostname))
+`)
 
-	username, err := opts.Prompter.Input("Bitbucket username:", "")
+	username, err := opts.Prompter.Input("Atlassian account email:", "")
 	if err != nil {
 		return err
 	}
@@ -157,12 +157,12 @@ Required permissions: Account (Read), Repositories (Read, Write), Pull Requests 
 		return fmt.Errorf("username is required")
 	}
 
-	appPassword, err := opts.Prompter.Password("App password:")
+	appPassword, err := opts.Prompter.Password("API token:")
 	if err != nil {
 		return err
 	}
 	if appPassword == "" {
-		return fmt.Errorf("app password is required")
+		return fmt.Errorf("API token is required")
 	}
 
 	// Verify credentials
@@ -176,7 +176,7 @@ Required permissions: Account (Read), Repositories (Read, Write), Pull Requests 
 		return fmt.Errorf("error refreshing credentials for %s, received credentials for %s, did you use the correct account?", activeUser, username)
 	}
 
-	// Store combined token (username:app_password format)
+	// Store combined token (email:api_token format)
 	combinedToken := username + ":" + appPassword
 	if _, err := authCfg.Login(hostname, username, combinedToken, "", !opts.InsecureStorage); err != nil {
 		return err
@@ -195,7 +195,7 @@ Required permissions: Account (Read), Repositories (Read, Write), Pull Requests 
 	return nil
 }
 
-// verifyCredentials checks if the username and app password are valid
+// verifyCredentials checks if the email and API token are valid
 func verifyCredentials(hostname, username, token string) error {
 	client := &http.Client{}
 
@@ -214,7 +214,7 @@ func verifyCredentials(hostname, username, token string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 401 {
-		return fmt.Errorf("invalid username or app password")
+		return fmt.Errorf("invalid email or API token")
 	}
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("unexpected response status: %d", resp.StatusCode)

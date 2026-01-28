@@ -30,8 +30,8 @@ type LoginOptions struct {
 	SecureStorage  bool
 }
 
-// Login performs the Bitbucket login flow using App Passwords.
-// App Passwords are Bitbucket's equivalent of GitHub PATs.
+// Login performs the Bitbucket login flow using API tokens.
+// API tokens are created at https://id.atlassian.com/manage-profile/security/api-tokens.
 func Login(opts *LoginOptions) error {
 	cfg := opts.Config
 	hostname := opts.Hostname
@@ -60,13 +60,13 @@ func Login(opts *LoginOptions) error {
 		}
 	}
 
-	// Bitbucket uses App Passwords - prompt for username and app password
+	// Bitbucket uses API tokens - prompt for email and API token
 	fmt.Fprint(opts.IO.ErrOut, heredoc.Docf(`
-		Tip: you can generate an App Password here https://%s/account/settings/app-passwords/
-		Required permissions: Account (Read), Repositories (Read, Write), Pull Requests (Read, Write)
+		Tip: you can generate an API token here https://id.atlassian.com/manage-profile/security/api-tokens
+		Required scopes: read:user, read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
 	`, hostname))
 
-	username, err := opts.Prompter.Input("Bitbucket username:", "")
+	username, err := opts.Prompter.Input("Atlassian account email:", "")
 	if err != nil {
 		return err
 	}
@@ -74,15 +74,15 @@ func Login(opts *LoginOptions) error {
 		return fmt.Errorf("username is required")
 	}
 
-	appPassword, err := opts.Prompter.Password("App password:")
+	appPassword, err := opts.Prompter.Password("API token:")
 	if err != nil {
 		return err
 	}
 	if appPassword == "" {
-		return fmt.Errorf("app password is required")
+		return fmt.Errorf("API token is required")
 	}
 
-	// Bitbucket tokens are stored as "username:app_password"
+	// Bitbucket tokens are stored as "email:api_token"
 	authToken := fmt.Sprintf("%s:%s", username, appPassword)
 
 	// Verify the credentials by calling the Bitbucket API
@@ -125,7 +125,7 @@ func Login(opts *LoginOptions) error {
 	return nil
 }
 
-// verifyCredentials verifies the username and app password against the Bitbucket API.
+// verifyCredentials verifies the email and API token against the Bitbucket API.
 func verifyCredentials(httpClient *http.Client, hostname, username, appPassword string) error {
 	apiURL := bbinstance.RESTPrefix(hostname) + "user"
 
@@ -161,7 +161,7 @@ func verifyCredentials(httpClient *http.Client, hostname, username, appPassword 
 	return nil
 }
 
-// GetCurrentLogin returns the username from a Bitbucket token (which is in username:app_password format).
+// GetCurrentLogin returns the username from a Bitbucket token (which is in email:api_token format).
 func GetCurrentLogin(httpClient httpClient, hostname, authToken string) (string, error) {
 	// For Bitbucket, the username is the first part of the token
 	if idx := strings.Index(authToken, ":"); idx > 0 {

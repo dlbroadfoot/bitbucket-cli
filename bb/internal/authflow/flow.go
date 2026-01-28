@@ -1,7 +1,5 @@
 // Package authflow provides authentication flows for Bitbucket.
-// Bitbucket supports two authentication methods:
-// 1. API Tokens (new) - requires Atlassian account email + API token
-// 2. App Passwords (legacy) - requires Bitbucket username + app password
+// Bitbucket uses API tokens for authentication, requiring an Atlassian account email + API token.
 // OAuth device flow is not supported.
 package authflow
 
@@ -21,7 +19,7 @@ import (
 // AuthFlowResult contains the result of an authentication flow.
 type AuthFlowResult struct {
 	Username string
-	Token    string // This is "email:api_token" or "username:app_password" for Bitbucket
+	Token    string // This is "email:api_token" for Bitbucket
 }
 
 // APITokenAuth performs authentication using a Bitbucket API Token.
@@ -33,8 +31,8 @@ func APITokenAuth(hostname string, IO *iostreams.IOStreams, prompter Prompter) (
 
 	// Show guidance for creating an API Token
 	fmt.Fprint(w, `
-Tip: you can generate an API Token here https://bitbucket.org/account/settings/api-tokens/
-Required scopes: read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
+Tip: you can generate an API Token here https://id.atlassian.com/manage-profile/security/api-tokens
+Required scopes: read:user, read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
 
 Note: API tokens require your Atlassian account email (not your Bitbucket username).
 
@@ -114,7 +112,7 @@ Required permissions: Account (Read), Repositories (Read, Write), Pull Requests 
 
 	fmt.Fprintf(w, "%s Authentication complete.\n", cs.SuccessIcon())
 
-	// Return the combined token (username:app_password format)
+	// Return the combined token (username:app_password format for legacy auth)
 	token := fmt.Sprintf("%s:%s", username, appPassword)
 
 	return &AuthFlowResult{
@@ -201,7 +199,7 @@ func verifyCredentials(hostname, username, appPassword string) error {
 }
 
 // GetCurrentLogin extracts the username from a Bitbucket token.
-// Bitbucket tokens are stored as "username:app_password".
+// Bitbucket tokens are stored as "email:api_token".
 func GetCurrentLogin(token string) (string, error) {
 	if idx := strings.Index(token, ":"); idx > 0 {
 		return token[:idx], nil
