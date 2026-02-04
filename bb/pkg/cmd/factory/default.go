@@ -57,6 +57,11 @@ func BaseRepoFunc(f *cmdutil.Factory) func() (bbrepo.Interface, error) {
 // network resolution.
 func SmartBaseRepoFunc(f *cmdutil.Factory) func() (bbrepo.Interface, error) {
 	return func() (bbrepo.Interface, error) {
+		// Check for BB_REPO environment variable first
+		if override := os.Getenv("BB_REPO"); override != "" {
+			return bbrepo.FromFullName(override)
+		}
+
 		remotes, err := f.Remotes()
 		if err != nil {
 			return nil, err
