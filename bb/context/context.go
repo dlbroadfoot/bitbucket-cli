@@ -71,13 +71,17 @@ func (r *ResolvedRemotes) BaseRepo(io *iostreams.IOStreams) (bbrepo.Interface, e
 	cs := io.ColorScheme()
 
 	fmt.Fprintf(io.ErrOut,
-		"%s No default remote repository has been set. To learn more about the default repository, run: bb repo set-default --help\n",
+		"%s No default remote repository has been set.\n",
 		cs.FailureIcon())
+
+	fmt.Fprintln(io.ErrOut, "\nYou can specify a repository using:")
+	fmt.Fprintln(io.ErrOut, "  • The --repo flag: bb pr list --repo WORKSPACE/REPO")
+	fmt.Fprintln(io.ErrOut, "  • The BB_REPO environment variable: export BB_REPO=WORKSPACE/REPO")
 
 	fmt.Fprintln(io.Out)
 
 	return nil, errors.New(
-		"please run `bb repo set-default` to select a default remote repository.")
+		"no default remote repository")
 }
 
 // RemoteForRepo finds the git remote that points to a repository
