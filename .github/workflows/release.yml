@@ -334,9 +334,6 @@ jobs:
           end
           EOF
 
-          # Remove leading whitespace from heredoc
-          sed -i 's/^          //' Formula/bb.rb
-
           # Replace placeholders with actual values
           sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" Formula/bb.rb
           sed -i "s/MACOS_ARM64_SHA_PLACEHOLDER/${MACOS_ARM64_SHA}/g" Formula/bb.rb

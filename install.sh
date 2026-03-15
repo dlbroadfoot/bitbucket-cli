@@ -3,7 +3,7 @@
 # Usage: curl -fsSL https://raw.githubusercontent.com/dlbroadfoot/bitbucket-cli/main/install.sh | sh
 #
 # Works on macOS, Linux, and WSL.
-# For Windows (native), use: winget install dlbroadfoot.bb
+# For Windows (native), use: irm https://raw.githubusercontent.com/dlbroadfoot/bitbucket-cli/main/install.ps1 | iex
 
 set -e
 
@@ -32,7 +32,7 @@ detect_os() {
   case "$(uname -s)" in
     Darwin)  echo "macOS" ;;
     Linux)   echo "linux" ;;
-    MINGW*|MSYS*|CYGWIN*) error "Use 'winget install dlbroadfoot.bb' on Windows" ;;
+    MINGW*|MSYS*|CYGWIN*) error "Use the PowerShell installer on Windows: irm .../install.ps1 | iex" ;;
     *)       error "Unsupported operating system: $(uname -s)" ;;
   esac
 }
@@ -102,26 +102,26 @@ main() {
   esac
 
   # Create temp directory
-  TMPDIR=$(mktemp -d)
-  trap 'rm -rf "$TMPDIR"' EXIT
+  BB_TMPDIR=$(mktemp -d)
+  trap 'rm -rf "$BB_TMPDIR"' EXIT
 
   info "Downloading ${FILENAME}..."
-  download "$URL" "${TMPDIR}/${FILENAME}"
+  download "$URL" "${BB_TMPDIR}/${FILENAME}"
 
   # Install
   case "$OS" in
     macOS)
       info "Installing via macOS package installer..."
-      sudo installer -pkg "${TMPDIR}/${FILENAME}" -target /
+      sudo installer -pkg "${BB_TMPDIR}/${FILENAME}" -target /
       ;;
     linux)
       info "Extracting archive..."
-      tar xzf "${TMPDIR}/${FILENAME}" -C "$TMPDIR"
+      tar xzf "${BB_TMPDIR}/${FILENAME}" -C "$BB_TMPDIR"
 
       # Find the bb binary (it's inside a directory in the tarball)
-      BB_BIN=$(find "$TMPDIR" -name "bb" -type f -perm -u+x | head -1)
+      BB_BIN=$(find "$BB_TMPDIR" -name "bb" -type f -perm -u+x | head -1)
       if [ -z "$BB_BIN" ]; then
-        BB_BIN=$(find "$TMPDIR" -name "bb" -type f | head -1)
+        BB_BIN=$(find "$BB_TMPDIR" -name "bb" -type f | head -1)
       fi
 
       if [ -z "$BB_BIN" ]; then
