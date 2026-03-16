@@ -5,12 +5,13 @@ $ErrorActionPreference = "Stop"
 
 $Repo = "dlbroadfoot/bitbucket-cli"
 
-# Detect architecture
-$Arch = switch ($env:PROCESSOR_ARCHITECTURE) {
+# Detect architecture (account for WoW64 — 32-bit PowerShell on 64-bit OS)
+$RawArch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+$Arch = switch ($RawArch) {
     "AMD64" { "amd64" }
     "ARM64" { "arm64" }
     "x86"   { "386" }
-    default { throw "Unsupported architecture: $env:PROCESSOR_ARCHITECTURE" }
+    default { throw "Unsupported architecture: $RawArch" }
 }
 
 Write-Host "Installing Bitbucket CLI (bb)..." -ForegroundColor Cyan
@@ -31,9 +32,32 @@ $MsiPath = Join-Path $TempDir $Filename
 Write-Host "Downloading $Filename..." -ForegroundColor Cyan
 Invoke-WebRequest -Uri $Url -OutFile $MsiPath -UseBasicParsing
 
+# Verify checksum
+Write-Host "Verifying checksum..." -ForegroundColor Cyan
+$ChecksumsUrl = "https://github.com/$Repo/releases/download/v${Version}/checksums.txt"
+$ChecksumsPath = Join-Path $TempDir "checksums.txt"
+Invoke-WebRequest -Uri $ChecksumsUrl -OutFile $ChecksumsPath -UseBasicParsing
+
+$ExpectedHash = (
+    Select-String -Path $ChecksumsPath -Pattern ([regex]::Escape($Filename)) |
+    Select-Object -First 1
+).Line.Split()[0]
+if (-not $ExpectedHash) { throw "Could not find checksum for $Filename" }
+
+$ActualHash = (Get-FileHash -Path $MsiPath -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($ActualHash -ne $ExpectedHash.ToLowerInvariant()) {
+    throw "Checksum mismatch for $Filename (expected: $ExpectedHash, got: $ActualHash)"
+}
+
 # Install MSI
 Write-Host "Installing..." -ForegroundColor Cyan
-Start-Process msiexec.exe -ArgumentList "/i", "`"$MsiPath`"", "/quiet", "/norestart" -Wait -Verb RunAs
+$MsiProcess = Start-Process msiexec.exe `
+    -ArgumentList "/i", "`"$MsiPath`"", "/quiet", "/norestart" `
+    -Wait -PassThru -Verb RunAs
+
+if ($MsiProcess.ExitCode -ne 0) {
+    throw "MSI installation failed with exit code $($MsiProcess.ExitCode)"
+}
 
 # Cleanup
 Remove-Item -Recurse -Force $TempDir -ErrorAction SilentlyContinue

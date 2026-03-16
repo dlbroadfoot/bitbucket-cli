@@ -108,6 +108,22 @@ main() {
   info "Downloading ${FILENAME}..."
   download "$URL" "${BB_TMPDIR}/${FILENAME}"
 
+  # Verify checksum
+  info "Verifying checksum..."
+  CHECKSUMS_URL="https://github.com/${REPO}/releases/download/${TAG}/checksums.txt"
+  download "$CHECKSUMS_URL" "${BB_TMPDIR}/checksums.txt"
+
+  EXPECTED_SHA=$(awk -v f="$FILENAME" '$2==f { print $1; exit }' "${BB_TMPDIR}/checksums.txt")
+  [ -n "$EXPECTED_SHA" ] || error "Could not find checksum for ${FILENAME}"
+
+  if command -v sha256sum >/dev/null 2>&1; then
+    ACTUAL_SHA=$(sha256sum "${BB_TMPDIR}/${FILENAME}" | awk '{print $1}')
+  else
+    ACTUAL_SHA=$(shasum -a 256 "${BB_TMPDIR}/${FILENAME}" | awk '{print $1}')
+  fi
+
+  [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ] || error "Checksum mismatch for ${FILENAME}"
+
   # Install
   case "$OS" in
     macOS)

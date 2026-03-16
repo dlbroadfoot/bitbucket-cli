@@ -36,7 +36,6 @@ jobs:
           workdir: bb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -284,6 +283,15 @@ jobs:
           LINUX_ARM64_SHA=$(grep "bb_${VERSION}_linux_arm64.tar.gz" checksums.txt | awk '{print $1}')
           LINUX_AMD64_SHA=$(grep "bb_${VERSION}_linux_amd64.tar.gz" checksums.txt | awk '{print $1}')
 
+          # Validate all checksums were found
+          for var in MACOS_ARM64_SHA MACOS_AMD64_SHA LINUX_ARM64_SHA LINUX_AMD64_SHA; do
+            eval "val=\${$var}"
+            if [ -z "$val" ]; then
+              echo "::error::Missing checksum for $var"
+              exit 1
+            fi
+          done
+
           # Clone the tap repo
           git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/dlbroadfoot/homebrew-tap.git" tap
           cd tap
@@ -345,8 +353,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/bb.rb
-          git commit -m "Update bb to ${VERSION}"
-          git push
+          if git diff --cached --quiet; then
+            echo "No formula changes to commit."
+          else
+            git commit -m "Update bb to ${VERSION}"
+            git push
+          fi
 
   # Update WinGet manifest
   winget:

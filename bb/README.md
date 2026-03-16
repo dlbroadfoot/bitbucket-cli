@@ -35,7 +35,7 @@ This produces binaries for macOS (universal), Linux (amd64, arm64, 386, armv6), 
 
 ### Project structure
 
-```
+```text
 bb/
   cmd/bb/        Entry point
   pkg/cmd/       Command implementations (Cobra)
