@@ -2,7 +2,7 @@ module github.com/dlbroadfoot/bitbucket-cli
 
 go 1.25.0
 
-toolchain go1.25.5
+toolchain go1.25.8
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
