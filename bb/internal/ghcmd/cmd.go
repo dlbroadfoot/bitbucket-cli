@@ -167,11 +167,11 @@ func Main() exitCode {
 			return exitOK
 		}
 		fmt.Fprintf(stderr, "\n\n%s %s → %s\n",
-			ansi.Color("A new release of gh is available:", "yellow"),
+			ansi.Color("A new release of bb is available:", "yellow"),
 			ansi.Color(strings.TrimPrefix(buildVersion, "v"), "cyan"),
 			ansi.Color(strings.TrimPrefix(newRelease.Version, "v"), "cyan"))
 		if isHomebrew {
-			fmt.Fprintf(stderr, "To upgrade, run: %s\n", "brew upgrade gh")
+			fmt.Fprintf(stderr, "To upgrade, run: %s\n", "brew upgrade dlbroadfoot/tap/bb")
 		}
 		fmt.Fprintf(stderr, "%s\n\n",
 			ansi.Color(newRelease.URL, "yellow"))

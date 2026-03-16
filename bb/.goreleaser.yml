@@ -20,6 +20,7 @@ builds:
     goarch: [amd64, arm64]
     binary: bb
     main: ./cmd/bb
+    tags: [updateable]
     env:
       - CGO_ENABLED=0
     ldflags:
@@ -28,6 +29,7 @@ builds:
   - id: linux
     goos: [linux]
     goarch: [386, arm, amd64, arm64]
+    tags: [updateable]
     env:
       - CGO_ENABLED=0
     binary: bb
@@ -40,6 +42,7 @@ builds:
     goarch: [386, amd64, arm64]
     binary: bb
     main: ./cmd/bb
+    tags: [updateable]
     ldflags:
       - -s -w -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Version={{.Version}} -X github.com/dlbroadfoot/bitbucket-cli/internal/build.Date={{time "2006-01-02"}}
 
