@@ -355,20 +355,19 @@ func humanizeTokenSource(source string) string {
 
 func buildEntry(opts buildEntryOptions) authEntry {
 	// Check BB_TOKEN first — the go-gh library doesn't know about it
-	tokenSource := opts.tokenSource
+	rawSource := opts.tokenSource
 	if os.Getenv("BB_TOKEN") != "" && opts.active {
-		tokenSource = "BB_TOKEN environment variable"
+		rawSource = "BB_TOKEN"
 		if opts.token == "" {
 			opts.token = os.Getenv("BB_TOKEN")
 		}
-	} else {
-		tokenSource = humanizeTokenSource(opts.tokenSource)
 	}
+
 	entry := authEntry{
 		Active:      opts.active,
 		Host:        opts.hostname,
 		Login:       opts.username,
-		TokenSource: tokenSource,
+		TokenSource: humanizeTokenSource(rawSource),
 		Token:       opts.token,
 		GitProtocol: opts.gitProtocol,
 	}
@@ -376,7 +375,7 @@ func buildEntry(opts buildEntryOptions) authEntry {
 	// If token is not writeable, then it came from an environment variable and
 	// we need to fetch the username as it won't be stored in the config.
 	// For BB_TOKEN format "email:api_token", extract the email from the token
-	if !authTokenWriteable(tokenSource) && opts.token != "" {
+	if !authTokenWriteable(rawSource) && opts.token != "" {
 		if idx := strings.Index(opts.token, ":"); idx > -1 {
 			entry.Login = opts.token[:idx]
 		}

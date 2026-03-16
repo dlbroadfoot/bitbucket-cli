@@ -23,8 +23,12 @@ func IsHeadless() bool {
 		if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
 			return true
 		}
+		// Even with X11 forwarding (DISPLAY set), Secret Service keyring prompts
+		// won't work without a D-Bus session. Treat SSH as headless unless both
+		// a display AND D-Bus are available.
 		hasDisplay := os.Getenv("DISPLAY") != "" || os.Getenv("WAYLAND_DISPLAY") != ""
-		return !hasDisplay
+		hasDBus := os.Getenv("DBUS_SESSION_BUS_ADDRESS") != ""
+		return !hasDisplay || !hasDBus
 	}
 
 	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
