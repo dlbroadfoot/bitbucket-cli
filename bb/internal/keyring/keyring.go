@@ -3,6 +3,7 @@ package keyring
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/zalando/go-keyring"
@@ -28,8 +29,8 @@ func Set(service, user, secret string) error {
 	select {
 	case err := <-ch:
 		return err
-	case <-time.After(3 * time.Second):
-		return &TimeoutError{"timeout while trying to set secret in keyring"}
+	case <-time.After(Timeout()):
+		return &TimeoutError{timeoutMessage("set")}
 	}
 }
 
@@ -53,8 +54,8 @@ func Get(service, user string) (string, error) {
 			return "", ErrNotFound
 		}
 		return res.val, res.err
-	case <-time.After(3 * time.Second):
-		return "", &TimeoutError{"timeout while trying to get secret from keyring"}
+	case <-time.After(Timeout()):
+		return "", &TimeoutError{timeoutMessage("get")}
 	}
 }
 
@@ -68,9 +69,19 @@ func Delete(service, user string) error {
 	select {
 	case err := <-ch:
 		return err
-	case <-time.After(3 * time.Second):
-		return &TimeoutError{"timeout while trying to delete secret from keyring"}
+	case <-time.After(Timeout()):
+		return &TimeoutError{timeoutMessage("delete")}
 	}
+}
+
+func timeoutMessage(op string) string {
+	msg := fmt.Sprintf("timeout while trying to %s secret in keyring", op)
+	if IsHeadless() {
+		msg += "\nhint: use --insecure-storage or set BB_TOKEN to avoid keyring in headless environments"
+	} else {
+		msg += fmt.Sprintf("\nhint: increase timeout with BB_KEYRING_TIMEOUT (current: %s)", Timeout())
+	}
+	return msg
 }
 
 func MockInit() {
