@@ -36,7 +36,6 @@ jobs:
           workdir: bb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -251,3 +250,125 @@ jobs:
             --generate-notes \
             $PRERELEASE_FLAG \
             release/*
+
+  # Update Homebrew tap
+  homebrew:
+    needs: release
+    if: "!contains(github.ref_name, '-')"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          gh release download "$TAG_NAME" --pattern "checksums.txt" --dir .
+
+      - name: Update Homebrew formula
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+
+          # Extract checksums for each archive
+          MACOS_ARM64_SHA=$(awk '/bb_'"${VERSION}"'_macOS_arm64\.zip$/ {print $1; exit}' checksums.txt)
+          MACOS_AMD64_SHA=$(awk '/bb_'"${VERSION}"'_macOS_amd64\.zip$/ {print $1; exit}' checksums.txt)
+          LINUX_ARM64_SHA=$(awk '/bb_'"${VERSION}"'_linux_arm64\.tar\.gz$/ {print $1; exit}' checksums.txt)
+          LINUX_AMD64_SHA=$(awk '/bb_'"${VERSION}"'_linux_amd64\.tar\.gz$/ {print $1; exit}' checksums.txt)
+
+          # Validate all checksums were found
+          for var in MACOS_ARM64_SHA MACOS_AMD64_SHA LINUX_ARM64_SHA LINUX_AMD64_SHA; do
+            eval "val=\${$var}"
+            if [ -z "$val" ]; then
+              echo "::error::Missing checksum for $var"
+              exit 1
+            fi
+          done
+
+          # Clone the tap repo
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/dlbroadfoot/homebrew-tap.git" tap
+          cd tap
+
+          # Generate updated formula
+          cat > Formula/bb.rb <<'EOF'
+          # typed: false
+          # frozen_string_literal: true
+
+          class Bb < Formula
+            desc "Bitbucket CLI - Work seamlessly with Bitbucket from the command line"
+            homepage "https://github.com/dlbroadfoot/bitbucket-cli"
+            version "VERSION_PLACEHOLDER"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/dlbroadfoot/bitbucket-cli/releases/download/v#{version}/bb_#{version}_macOS_arm64.zip"
+                sha256 "MACOS_ARM64_SHA_PLACEHOLDER"
+              else
+                url "https://github.com/dlbroadfoot/bitbucket-cli/releases/download/v#{version}/bb_#{version}_macOS_amd64.zip"
+                sha256 "MACOS_AMD64_SHA_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+                url "https://github.com/dlbroadfoot/bitbucket-cli/releases/download/v#{version}/bb_#{version}_linux_arm64.tar.gz"
+                sha256 "LINUX_ARM64_SHA_PLACEHOLDER"
+              else
+                url "https://github.com/dlbroadfoot/bitbucket-cli/releases/download/v#{version}/bb_#{version}_linux_amd64.tar.gz"
+                sha256 "LINUX_AMD64_SHA_PLACEHOLDER"
+              end
+            end
+
+            def install
+              if File.exist?("bb")
+                bin.install "bb"
+              else
+                bb_binary = Dir.glob("*/bb").first || Dir.glob("bb_*/bb").first
+                bin.install bb_binary => "bb" if bb_binary
+              end
+            end
+
+            test do
+              system "#{bin}/bb", "--version"
+            end
+          end
+          EOF
+
+          # Replace placeholders with actual values
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" Formula/bb.rb
+          sed -i "s/MACOS_ARM64_SHA_PLACEHOLDER/${MACOS_ARM64_SHA}/g" Formula/bb.rb
+          sed -i "s/MACOS_AMD64_SHA_PLACEHOLDER/${MACOS_AMD64_SHA}/g" Formula/bb.rb
+          sed -i "s/LINUX_ARM64_SHA_PLACEHOLDER/${LINUX_ARM64_SHA}/g" Formula/bb.rb
+          sed -i "s/LINUX_AMD64_SHA_PLACEHOLDER/${LINUX_AMD64_SHA}/g" Formula/bb.rb
+
+          # Commit and push
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/bb.rb
+          if git diff --cached --quiet; then
+            echo "No formula changes to commit."
+          else
+            git commit -m "Update bb to ${VERSION}"
+            git push
+          fi
+
+  # Update WinGet manifest
+  winget:
+    needs: release
+    if: "!contains(github.ref_name, '-')"
+    runs-on: windows-latest
+    steps:
+      - name: Update WinGet manifest
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: dlbroadfoot.bb
+          installers-regex: '\.msi$'
+          token: ${{ secrets.WINGET_PAT }}
