@@ -135,10 +135,7 @@ main() {
       tar xzf "${BB_TMPDIR}/${FILENAME}" -C "$BB_TMPDIR"
 
       # Find the bb binary (it's inside a directory in the tarball)
-      BB_BIN=$(find "$BB_TMPDIR" -name "bb" -type f -perm -u+x | head -1)
-      if [ -z "$BB_BIN" ]; then
-        BB_BIN=$(find "$BB_TMPDIR" -name "bb" -type f | head -1)
-      fi
+      BB_BIN=$(find "$BB_TMPDIR" -name "bb" -type f | head -1)
 
       if [ -z "$BB_BIN" ]; then
         error "Could not find bb binary in archive"

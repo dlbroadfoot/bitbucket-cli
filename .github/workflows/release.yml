@@ -278,10 +278,10 @@ jobs:
           VERSION="${TAG_NAME#v}"
 
           # Extract checksums for each archive
-          MACOS_ARM64_SHA=$(grep "bb_${VERSION}_macOS_arm64.zip" checksums.txt | awk '{print $1}')
-          MACOS_AMD64_SHA=$(grep "bb_${VERSION}_macOS_amd64.zip" checksums.txt | awk '{print $1}')
-          LINUX_ARM64_SHA=$(grep "bb_${VERSION}_linux_arm64.tar.gz" checksums.txt | awk '{print $1}')
-          LINUX_AMD64_SHA=$(grep "bb_${VERSION}_linux_amd64.tar.gz" checksums.txt | awk '{print $1}')
+          MACOS_ARM64_SHA=$(awk '/bb_'"${VERSION}"'_macOS_arm64\.zip$/ {print $1; exit}' checksums.txt)
+          MACOS_AMD64_SHA=$(awk '/bb_'"${VERSION}"'_macOS_amd64\.zip$/ {print $1; exit}' checksums.txt)
+          LINUX_ARM64_SHA=$(awk '/bb_'"${VERSION}"'_linux_arm64\.tar\.gz$/ {print $1; exit}' checksums.txt)
+          LINUX_AMD64_SHA=$(awk '/bb_'"${VERSION}"'_linux_amd64\.tar\.gz$/ {print $1; exit}' checksums.txt)
 
           # Validate all checksums were found
           for var in MACOS_ARM64_SHA MACOS_AMD64_SHA LINUX_ARM64_SHA LINUX_AMD64_SHA; do
