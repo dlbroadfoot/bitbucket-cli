@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -338,12 +339,30 @@ type buildEntryOptions struct {
 	username    string
 }
 
+func humanizeTokenSource(source string) string {
+	switch source {
+	case "oauth_token":
+		return filepath.Join(config.ConfigDir(), "hosts.yml")
+	case "keyring":
+		return "keyring"
+	default:
+		if strings.HasSuffix(source, "_TOKEN") {
+			return source + " environment variable"
+		}
+		return source
+	}
+}
+
 func buildEntry(opts buildEntryOptions) authEntry {
+	// Check BB_TOKEN first — the go-gh library doesn't know about it
 	tokenSource := opts.tokenSource
-	if tokenSource == "oauth_token" {
-		// The go-gh function TokenForHost returns this value as source for tokens read from the
-		// config file, but we want the file path instead. This attempts to reconstruct it.
-		tokenSource = filepath.Join(config.ConfigDir(), "hosts.yml")
+	if os.Getenv("BB_TOKEN") != "" && opts.active {
+		tokenSource = "BB_TOKEN environment variable"
+		if opts.token == "" {
+			opts.token = os.Getenv("BB_TOKEN")
+		}
+	} else {
+		tokenSource = humanizeTokenSource(opts.tokenSource)
 	}
 	entry := authEntry{
 		Active:      opts.active,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -126,7 +127,14 @@ func loginRun(opts *LoginOptions) error {
 
 	hostname := strings.ToLower(opts.Hostname)
 
-	// Check if token is already set via environment
+	// Block login when BB_TOKEN is set — credentials are externally managed
+	if token := os.Getenv("BB_TOKEN"); token != "" {
+		fmt.Fprintf(opts.IO.ErrOut, "The BB_TOKEN environment variable is set. Credentials are externally managed.\n")
+		fmt.Fprintf(opts.IO.ErrOut, "To use 'bb auth login', first unset BB_TOKEN.\n")
+		return cmdutil.SilentError
+	}
+
+	// Check if token is already set via other environment variables (GH_TOKEN, etc.)
 	if src, writeable := shared.AuthTokenWriteable(authCfg, hostname); !writeable {
 		fmt.Fprintf(opts.IO.ErrOut, "The value of the %s environment variable is being used for authentication.\n", src)
 		fmt.Fprint(opts.IO.ErrOut, "To have Bitbucket CLI store credentials instead, first clear the value from the environment.\n")
@@ -195,9 +203,14 @@ func loginRun(opts *LoginOptions) error {
 	// For Bitbucket API tokens, we store email:token for Basic Auth
 	combinedToken := email + ":" + token
 
-	_, loginErr := authCfg.Login(hostname, username, combinedToken, gitProtocol, !opts.InsecureStorage)
+	insecureStorageUsed, loginErr := authCfg.Login(hostname, username, combinedToken, gitProtocol, !opts.InsecureStorage)
 	if loginErr != nil {
 		return loginErr
+	}
+
+	if insecureStorageUsed && !opts.InsecureStorage {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Keyring unavailable — credentials saved in plain text\n", cs.Yellow("!"))
+		fmt.Fprintf(opts.IO.ErrOut, "  Use --insecure-storage to suppress this warning, or set BB_TOKEN for headless environments\n")
 	}
 
 	fmt.Fprintf(opts.IO.ErrOut, "%s Logged in as %s\n", cs.SuccessIcon(), cs.Bold(username))
