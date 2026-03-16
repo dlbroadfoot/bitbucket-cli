@@ -91,8 +91,8 @@ Pre-built binaries for all platforms are available on the [releases page](https:
 ## Get started
 
 ```sh
-# Authenticate with Bitbucket
-bb auth login
+# Authenticate with Bitbucket (opens browser to guide you through token creation)
+bb auth login --web
 
 # List pull requests in the current repo
 bb pr list
@@ -144,9 +144,17 @@ Run `bb <command> --help` for details on any command.
 
 ## Authentication
 
-`bb` uses Bitbucket [App Passwords](https://support.atlassian.com/bitbucket-cloud/docs/create-an-app-password/) for authentication. Running `bb auth login` will walk you through creating one.
+`bb` uses Bitbucket [API tokens](https://id.atlassian.com/manage-profile/security/api-tokens) for authentication.
 
-**Required permissions:** Account (Read), Repositories (Read/Write), Pull Requests (Read/Write). Add Issues and Pipelines permissions if you use those features.
+```sh
+# Guided setup — opens browser to create a token with step-by-step instructions
+bb auth login --web
+
+# Or authenticate non-interactively
+BB_TOKEN=email:token bb pr list
+```
+
+**Required scopes:** Account (Read), Repositories (Read/Write), Pull Requests (Read/Write). Add Issues and Pipelines permissions if you use those features.
 
 ## Configuration
 

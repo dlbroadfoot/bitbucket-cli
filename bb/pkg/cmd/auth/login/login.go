@@ -10,6 +10,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/bbinstance"
+	"github.com/dlbroadfoot/bitbucket-cli/internal/browser"
 	"github.com/dlbroadfoot/bitbucket-cli/internal/gh"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmd/auth/shared"
 	"github.com/dlbroadfoot/bitbucket-cli/pkg/cmdutil"
@@ -17,10 +18,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const tokenURL = "https://id.atlassian.com/manage-profile/security/api-tokens"
+
 type LoginOptions struct {
 	IO       *iostreams.IOStreams
 	Config   func() (gh.Config, error)
 	Prompter shared.Prompt
+	Browser  browser.Browser
 
 	Interactive bool
 
@@ -28,6 +32,7 @@ type LoginOptions struct {
 	Email           string // Atlassian account email for API tokens
 	Token           string
 	GitProtocol     string
+	Web             bool
 	InsecureStorage bool
 }
 
@@ -36,6 +41,7 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 		IO:       f.IOStreams,
 		Config:   f.Config,
 		Prompter: f.Prompter,
+		Browser:  f.Browser,
 	}
 
 	var tokenStdin bool
@@ -49,12 +55,11 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 
 			The default hostname is %[1]sbitbucket.org%[1]s.
 
-			Authentication requires a Bitbucket API Token. To create one:
-			1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
-			2. Click "Create API token"
-			3. The token needs the following scopes: read:user, read:account, read:repository,
-			   write:repository, read:pullrequest, write:pullrequest
-			4. Copy the generated token
+			Authentication requires a Bitbucket API Token. Use %[1]s--web%[1]s to open the
+			Atlassian token creation page in your browser with step-by-step guidance.
+
+			Alternatively, create a token manually at:
+			https://id.atlassian.com/manage-profile/security/api-tokens
 
 			Note: API tokens require your Atlassian account email (not your Bitbucket username)
 			for authentication.
@@ -62,12 +67,14 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 			Use %[1]s--with-token%[1]s to pass an API token on standard input, or enter it
 			interactively when prompted.
 
-			Alternatively, set the %[1]sBB_TOKEN%[1]s environment variable with your API token.
-			This method is most suitable for automation. See %[1]sbb help environment%[1]s for more info.
+			Set the %[1]sBB_TOKEN%[1]s environment variable for automation.
 
 			The git protocol to use for git operations can be set with %[1]s--git-protocol%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
+			# Start interactive setup with browser guidance
+			$ bb auth login --web
+
 			# Start interactive setup
 			$ bb auth login
 
@@ -113,6 +120,7 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 	cmd.Flags().StringVarP(&opts.Email, "email", "e", "", "Atlassian account email for API token authentication")
 	cmd.Flags().BoolVar(&tokenStdin, "with-token", false, "Read API token from standard input")
 	cmdutil.StringEnumFlag(cmd, &opts.GitProtocol, "git-protocol", "p", "", []string{"ssh", "https"}, "The protocol to use for git operations on this host")
+	cmd.Flags().BoolVarP(&opts.Web, "web", "w", false, "Open browser to create token, then prompt for credentials")
 	cmd.Flags().BoolVar(&opts.InsecureStorage, "insecure-storage", false, "Save authentication credentials in plain text instead of credential store")
 
 	return cmd
@@ -144,13 +152,35 @@ func loginRun(opts *LoginOptions) error {
 	email := opts.Email
 	token := opts.Token
 
+	// Open browser to token creation page if --web is passed
+	if opts.Web && opts.Interactive {
+		fmt.Fprintln(opts.IO.ErrOut)
+		fmt.Fprintln(opts.IO.ErrOut, "Opening Atlassian to create a Bitbucket API token...")
+		fmt.Fprintln(opts.IO.ErrOut)
+		fmt.Fprintln(opts.IO.ErrOut, "IMPORTANT: Click \"Create API token with scopes\" and select \"Bitbucket\" as the application.")
+		fmt.Fprintln(opts.IO.ErrOut)
+		fmt.Fprintln(opts.IO.ErrOut, "Required scopes:")
+		fmt.Fprintln(opts.IO.ErrOut, "  - Account: Read (required for login)")
+		fmt.Fprintln(opts.IO.ErrOut, "  - Repositories: Read, Write")
+		fmt.Fprintln(opts.IO.ErrOut, "  - Pull requests: Read, Write")
+		fmt.Fprintln(opts.IO.ErrOut, "  - Issues: Read, Write (if using issue commands)")
+		fmt.Fprintln(opts.IO.ErrOut, "  - Pipelines: Read, Write (if using pipeline commands)")
+		fmt.Fprintln(opts.IO.ErrOut)
+		if err := opts.Browser.Browse(tokenURL); err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "Failed to open browser: %v\n", err)
+			fmt.Fprintf(opts.IO.ErrOut, "Please open %s manually.\n", tokenURL)
+		}
+		fmt.Fprintln(opts.IO.ErrOut)
+	}
+
 	// Interactive prompts
 	if opts.Interactive {
 		if email == "" {
-			fmt.Fprintln(opts.IO.ErrOut)
-			fmt.Fprintln(opts.IO.ErrOut, "Tip: Create an API token at https://id.atlassian.com/manage-profile/security/api-tokens")
-			fmt.Fprintln(opts.IO.ErrOut, "Required scopes: read:user, read:account, read:repository, write:repository, read:pullrequest, write:pullrequest")
-			fmt.Fprintln(opts.IO.ErrOut)
+			if !opts.Web {
+				fmt.Fprintln(opts.IO.ErrOut)
+				fmt.Fprintln(opts.IO.ErrOut, "Tip: use --web to open the token creation page in your browser")
+				fmt.Fprintln(opts.IO.ErrOut)
+			}
 
 			var err error
 			email, err = opts.Prompter.Input("Atlassian account email:", "")
