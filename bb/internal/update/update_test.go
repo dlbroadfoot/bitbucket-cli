@@ -375,7 +375,14 @@ func TestShouldCheckForUpdate(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "should not check when user has explicitly disable notifications",
+			name: "should not check when user has explicitly disabled notifications",
+			env: map[string]string{
+				"BB_NO_UPDATE_NOTIFIER": "1",
+			},
+			expected: false,
+		},
+		{
+			name: "should not check when user has set deprecated GH_NO_UPDATE_NOTIFIER",
 			env: map[string]string{
 				"GH_NO_UPDATE_NOTIFIER": "1",
 			},
@@ -432,7 +439,14 @@ func TestShouldCheckForExtensionUpdate(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "should not check when user has explicitly disable notifications",
+			name: "should not check when user has explicitly disabled notifications",
+			env: map[string]string{
+				"BB_NO_EXTENSION_UPDATE_NOTIFIER": "1",
+			},
+			expected: false,
+		},
+		{
+			name: "should not check when user has set deprecated GH_NO_EXTENSION_UPDATE_NOTIFIER",
 			env: map[string]string{
 				"GH_NO_EXTENSION_UPDATE_NOTIFIER": "1",
 			},

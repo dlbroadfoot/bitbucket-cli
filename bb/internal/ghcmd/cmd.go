@@ -143,7 +143,7 @@ func Main() exitCode {
 
 		if strings.Contains(err.Error(), "Incorrect function") {
 			fmt.Fprintln(stderr, "You appear to be running in MinTTY without pseudo terminal support.")
-			fmt.Fprintln(stderr, "To learn about workarounds for this error, run:  gh help mintty")
+			fmt.Fprintln(stderr, "To learn about workarounds for this error, run:  bb help mintty")
 			return exitError
 		}
 

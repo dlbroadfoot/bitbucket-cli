@@ -36,7 +36,7 @@ type StateEntry struct {
 // ShouldCheckForExtensionUpdate decides whether we check for updates for Bitbucket CLI extensions based on user preferences and current execution context.
 // During cli/cli#9934, this logic was split out from ShouldCheckForUpdate() because we envisioned it going in a different direction.
 func ShouldCheckForExtensionUpdate() bool {
-	if os.Getenv("GH_NO_EXTENSION_UPDATE_NOTIFIER") != "" {
+	if os.Getenv("BB_NO_EXTENSION_UPDATE_NOTIFIER") != "" || os.Getenv("GH_NO_EXTENSION_UPDATE_NOTIFIER") != "" {
 		return false
 	}
 	if os.Getenv("CODESPACES") != "" {
@@ -77,7 +77,7 @@ func CheckForExtensionUpdate(em extensions.ExtensionManager, ext extensions.Exte
 
 // ShouldCheckForUpdate decides whether we check for updates for the Bitbucket CLI based on user preferences and current execution context.
 func ShouldCheckForUpdate() bool {
-	if os.Getenv("BB_NO_UPDATE_NOTIFIER") != "" {
+	if os.Getenv("BB_NO_UPDATE_NOTIFIER") != "" || os.Getenv("GH_NO_UPDATE_NOTIFIER") != "" {
 		return false
 	}
 	if os.Getenv("CODESPACES") != "" {
