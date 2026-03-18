@@ -143,7 +143,7 @@ func Main() exitCode {
 
 		if strings.Contains(err.Error(), "Incorrect function") {
 			fmt.Fprintln(stderr, "You appear to be running in MinTTY without pseudo terminal support.")
-			fmt.Fprintln(stderr, "To learn about workarounds for this error, run:  gh help mintty")
+			fmt.Fprintln(stderr, "To learn about workarounds for this error, run:  bb help mintty")
 			return exitError
 		}
 
@@ -167,11 +167,11 @@ func Main() exitCode {
 			return exitOK
 		}
 		fmt.Fprintf(stderr, "\n\n%s %s → %s\n",
-			ansi.Color("A new release of gh is available:", "yellow"),
+			ansi.Color("A new release of bb is available:", "yellow"),
 			ansi.Color(strings.TrimPrefix(buildVersion, "v"), "cyan"),
 			ansi.Color(strings.TrimPrefix(newRelease.Version, "v"), "cyan"))
 		if isHomebrew {
-			fmt.Fprintf(stderr, "To upgrade, run: %s\n", "brew upgrade gh")
+			fmt.Fprintf(stderr, "To upgrade, run: %s\n", "brew upgrade dlbroadfoot/tap/bb")
 		}
 		fmt.Fprintf(stderr, "%s\n\n",
 			ansi.Color(newRelease.URL, "yellow"))

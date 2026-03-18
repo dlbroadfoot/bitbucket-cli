@@ -33,10 +33,10 @@ type StateEntry struct {
 	LatestRelease      ReleaseInfo `yaml:"latest_release"`
 }
 
-// ShouldCheckForExtensionUpdate decides whether we check for updates for GitHub CLI extensions based on user preferences and current execution context.
+// ShouldCheckForExtensionUpdate decides whether we check for updates for Bitbucket CLI extensions based on user preferences and current execution context.
 // During cli/cli#9934, this logic was split out from ShouldCheckForUpdate() because we envisioned it going in a different direction.
 func ShouldCheckForExtensionUpdate() bool {
-	if os.Getenv("GH_NO_EXTENSION_UPDATE_NOTIFIER") != "" {
+	if os.Getenv("BB_NO_EXTENSION_UPDATE_NOTIFIER") != "" || os.Getenv("GH_NO_EXTENSION_UPDATE_NOTIFIER") != "" {
 		return false
 	}
 	if os.Getenv("CODESPACES") != "" {
@@ -75,9 +75,9 @@ func CheckForExtensionUpdate(em extensions.ExtensionManager, ext extensions.Exte
 	return nil, nil
 }
 
-// ShouldCheckForUpdate decides whether we check for updates for the GitHub CLI based on user preferences and current execution context.
+// ShouldCheckForUpdate decides whether we check for updates for the Bitbucket CLI based on user preferences and current execution context.
 func ShouldCheckForUpdate() bool {
-	if os.Getenv("GH_NO_UPDATE_NOTIFIER") != "" {
+	if os.Getenv("BB_NO_UPDATE_NOTIFIER") != "" || os.Getenv("GH_NO_UPDATE_NOTIFIER") != "" {
 		return false
 	}
 	if os.Getenv("CODESPACES") != "" {
@@ -86,7 +86,7 @@ func ShouldCheckForUpdate() bool {
 	return !IsCI() && IsTerminal(os.Stdout) && IsTerminal(os.Stderr)
 }
 
-// CheckForUpdate checks whether an update exists for the GitHub CLI based on recency of last check within past 24 hours.
+// CheckForUpdate checks whether an update exists for the Bitbucket CLI based on recency of last check within past 24 hours.
 func CheckForUpdate(ctx context.Context, client *http.Client, stateFilePath, repo, currentVersion string) (*ReleaseInfo, error) {
 	stateEntry, _ := getStateEntry(stateFilePath)
 	if stateEntry != nil && time.Since(stateEntry.CheckedForUpdateAt).Hours() < 24 {
