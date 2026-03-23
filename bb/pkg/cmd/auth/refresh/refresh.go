@@ -144,8 +144,8 @@ func refreshRun(opts *RefreshOptions) error {
 
 	fmt.Fprint(opts.IO.ErrOut, `
 Tip: you can generate an API token here https://id.atlassian.com/manage-profile/security/api-tokens
-The token must include Account: Read (read:user:bitbucket) scope, plus scopes for features you use.
-Use --web flag for guided token creation with the correct scopes.
+The token must include User: Read (read:user:bitbucket) scope, plus scopes for features you use.
+For guided token creation with the correct scopes, run: bb auth login --web
 
 `)
 

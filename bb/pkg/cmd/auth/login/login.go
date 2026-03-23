@@ -275,7 +275,7 @@ func verifyCredentialsAndGetUsername(hostname, email, token string) (string, err
 	if resp.StatusCode == 403 {
 		body, _ := io.ReadAll(resp.Body)
 		return "", fmt.Errorf("your API token is missing required scopes.\n"+
-			"  The token must include Account: Read (read:user:bitbucket) scope.\n"+
+			"  The token must include User: Read (read:user:bitbucket) scope.\n"+
 			"  Re-create the token with the correct scopes using: bb auth login --web\n"+
 			"  API response: %s", string(body))
 	}
