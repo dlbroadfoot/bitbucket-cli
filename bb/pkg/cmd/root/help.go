@@ -211,7 +211,7 @@ func authHelp() string {
 	}
 
 	return heredoc.Doc(`
-		To get started with Bitbucket CLI, please run:  bb auth login
+		To get started with Bitbucket CLI, please run:  bb auth login --web
 		Alternatively, populate the BB_TOKEN environment variable with a Bitbucket API token.
 	`)
 }

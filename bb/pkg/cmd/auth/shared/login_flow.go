@@ -63,7 +63,8 @@ func Login(opts *LoginOptions) error {
 	// Bitbucket uses API tokens - prompt for email and API token
 	fmt.Fprint(opts.IO.ErrOut, heredoc.Docf(`
 		Tip: you can generate an API token here https://id.atlassian.com/manage-profile/security/api-tokens
-		Required scopes: read:user, read:account, read:repository, write:repository, read:pullrequest, write:pullrequest
+		The token must include Account: Read (read:user:bitbucket) scope, plus scopes for features you use.
+		Use --web flag for guided token creation with the correct scopes.
 	`, hostname))
 
 	username, err := opts.Prompter.Input("Atlassian account email:", "")
