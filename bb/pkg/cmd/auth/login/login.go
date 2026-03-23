@@ -160,6 +160,7 @@ func loginRun(opts *LoginOptions) error {
 		fmt.Fprintln(opts.IO.ErrOut, "IMPORTANT: Click \"Create API token with scopes\" and select \"Bitbucket\" as the application.")
 		fmt.Fprintln(opts.IO.ErrOut)
 		fmt.Fprintln(opts.IO.ErrOut, "Required scopes:")
+		fmt.Fprintln(opts.IO.ErrOut, "  - User: Read (required for login)")
 		fmt.Fprintln(opts.IO.ErrOut, "  - Account: Read (required for login)")
 		fmt.Fprintln(opts.IO.ErrOut, "  - Repositories: Read, Write")
 		fmt.Fprintln(opts.IO.ErrOut, "  - Pull requests: Read, Write")
@@ -270,6 +271,13 @@ func verifyCredentialsAndGetUsername(hostname, email, token string) (string, err
 
 	if resp.StatusCode == 401 {
 		return "", fmt.Errorf("invalid email or API token")
+	}
+	if resp.StatusCode == 403 {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("your API token is missing required scopes.\n"+
+			"  The token must include User: Read (read:user:bitbucket) scope.\n"+
+			"  Re-create the token with the correct scopes using: bb auth login --web\n"+
+			"  API response: %s", string(body))
 	}
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)

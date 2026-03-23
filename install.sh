@@ -157,13 +157,13 @@ main() {
     success "Bitbucket CLI (bb) ${VERSION} installed successfully!"
     printf "\n"
     info "Get started:"
-    printf "  bb auth login    # Authenticate with Bitbucket\n"
-    printf "  bb --help        # See all commands\n"
+    printf "  bb auth login --web    # Authenticate with Bitbucket (opens browser for token creation)\n"
+    printf "  bb --help              # See all commands\n"
   else
     success "Installed bb to ${INSTALL_DIR}/bb"
     printf "\n"
     printf "Make sure %s is in your PATH, then run:\n" "$INSTALL_DIR"
-    printf "  bb auth login\n"
+    printf "  bb auth login --web\n"
   fi
 }
 

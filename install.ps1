@@ -67,8 +67,9 @@ $BbPath = Get-Command bb -ErrorAction SilentlyContinue
 if ($BbPath) {
     Write-Host "`nBitbucket CLI (bb) $Version installed successfully!" -ForegroundColor Green
     Write-Host "`nGet started:"
-    Write-Host "  bb auth login    # Authenticate with Bitbucket"
-    Write-Host "  bb --help        # See all commands"
+    Write-Host "  bb auth login --web    # Authenticate with Bitbucket (opens browser for token creation)"
+    Write-Host "  bb --help              # See all commands"
 } else {
     Write-Host "`nInstalled bb $Version. You may need to restart your terminal for PATH changes to take effect." -ForegroundColor Yellow
+    Write-Host "  bb auth login --web"
 }
