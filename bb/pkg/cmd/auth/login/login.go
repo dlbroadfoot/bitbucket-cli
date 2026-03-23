@@ -161,7 +161,6 @@ func loginRun(opts *LoginOptions) error {
 		fmt.Fprintln(opts.IO.ErrOut)
 		fmt.Fprintln(opts.IO.ErrOut, "Required scopes:")
 		fmt.Fprintln(opts.IO.ErrOut, "  - User: Read (required for login)")
-		fmt.Fprintln(opts.IO.ErrOut, "  - Account: Read (required for login)")
 		fmt.Fprintln(opts.IO.ErrOut, "  - Repositories: Read, Write")
 		fmt.Fprintln(opts.IO.ErrOut, "  - Pull requests: Read, Write")
 		fmt.Fprintln(opts.IO.ErrOut, "  - Issues: Read, Write (if using issue commands)")
